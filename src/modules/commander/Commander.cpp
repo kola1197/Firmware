@@ -2104,7 +2104,8 @@ Commander::run()
 		if (armed.armed &&
 		    failure_detector_updated &&
 		    !_flight_termination_triggered &&
-		    !status_flags.circuit_breaker_flight_termination_disabled) {
+		    (!status_flags.circuit_breaker_flight_termination_disabled
+		     || (hrt_elapsed_time(&_time_at_takeoff) < 5_s))) {
 
 			if (_failure_detector.isFailure()) {
 
