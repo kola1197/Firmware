@@ -220,10 +220,11 @@ class GzmodelspawnRunner(Runner):
         self.add_to_env_if_set("PX4_HOME_LON")
         self.add_to_env_if_set("PX4_HOME_ALT")
         self.cmd = "gz"
-        self.args = ["model", "--spawn-file",
-                    workspace_dir + "/Tools/sitl_gazebo/models/" +
-                    self.model + "/" + self.model + ".sdf",
-                    "--model-name", self.model, "-x", "1.01", "-y", "0.98", "-z", "0.83"]
+        self.args = ["model", "--spawn-file", workspace_dir +
+                     "/Tools/sitl_gazebo/models/" +
+                     self.model + "/" + self.model + ".sdf",
+                     "--model-name", self.model,
+                     "-x", "1.01", "-y", "0.98", "-z", "0.83"]
 
     def add_to_env_if_set(self, var: str) -> None:
         if var in os.environ:
