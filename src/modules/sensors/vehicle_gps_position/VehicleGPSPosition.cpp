@@ -108,7 +108,7 @@ VehicleGPSPosition::Run()
 
 		gps_updated[i] = _sensor_gps_sub[i].updated();
 
-		if (gps_updated) {
+		if (gps_updated[i]) {
 			any_gps_updated = true;
 			_sensor_gps_sub[i].copy(&_gps_state[i]);
 		}
