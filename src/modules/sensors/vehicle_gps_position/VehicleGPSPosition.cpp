@@ -62,6 +62,7 @@ VehicleGPSPosition::Start()
 	// needed to change the active sensor if the primary stops updating
 	bool anyGpsRegistered = false;
 	bool registered[GPS_MAX_RECEIVERS];
+
 	for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
 		registered[i] = _sensor_gps_sub[i].registerCallback();
 		anyGpsRegistered |= registered[i];
@@ -102,6 +103,7 @@ VehicleGPSPosition::Run()
 	// Check all GPS instance
 	bool any_gps_updated = false;
 	bool gps_updated[GPS_MAX_RECEIVERS];
+
 	for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
 
 		gps_updated[i] = _sensor_gps_sub[i].updated();
@@ -121,41 +123,41 @@ VehicleGPSPosition::Run()
 		// blend multiple receivers if available
 
 		// calculate blending weights
-			if (!blend_gps_data()) {
-				// Only use selected receiver data if it has been updated
-				_gps_new_output_data = false;
-				_gps_select_index = 0;
+		if (!blend_gps_data()) {
+			// Only use selected receiver data if it has been updated
+			_gps_new_output_data = false;
+			_gps_select_index = 0;
 
-				// Find the single "best" GPS from the data we have
-				// First, find the GPS(s) with the best fix
-				uint8_t best_fix = 0;
+			// Find the single "best" GPS from the data we have
+			// First, find the GPS(s) with the best fix
+			uint8_t best_fix = 0;
 
-				for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
-					if (_gps_state[i].fix_type > best_fix) {
-						best_fix = _gps_state[i].fix_type;
-					}
-				}
-
-				// Second, compare GPS's with best fix and take the one with most satellites
-				uint8_t max_sats = 0;
-
-				for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
-					if (_gps_state[i].fix_type == best_fix && _gps_state[i].satellites_used > max_sats) {
-						max_sats = _gps_state[i].satellites_used;
-						_gps_select_index = i;
-					}
-				}
-
-				// Check for new data on selected GPS, and clear blend offsets
-				for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
-					if (gps_updated[i] && _gps_select_index == i) {
-						_gps_new_output_data = true;
-					}
-
-					_NE_pos_offset_m[i].zero();
-					_hgt_offset_mm[i] = 0.0f;
+			for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
+				if (_gps_state[i].fix_type > best_fix) {
+					best_fix = _gps_state[i].fix_type;
 				}
 			}
+
+			// Second, compare GPS's with best fix and take the one with most satellites
+			uint8_t max_sats = 0;
+
+			for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
+				if (_gps_state[i].fix_type == best_fix && _gps_state[i].satellites_used > max_sats) {
+					max_sats = _gps_state[i].satellites_used;
+					_gps_select_index = i;
+				}
+			}
+
+			// Check for new data on selected GPS, and clear blend offsets
+			for (uint8_t i = 0; i < GPS_MAX_RECEIVERS; i++) {
+				if (gps_updated[i] && _gps_select_index == i) {
+					_gps_new_output_data = true;
+				}
+
+				_NE_pos_offset_m[i].zero();
+				_hgt_offset_mm[i] = 0.0f;
+			}
+		}
 
 		if (_gps_new_output_data) {
 			// correct the _gps_state data for steady state offsets and write to _gps_output
