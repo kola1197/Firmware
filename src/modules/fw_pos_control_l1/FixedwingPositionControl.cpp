@@ -122,7 +122,6 @@ FixedwingPositionControl::parameters_update()
 	param_get(_parameter_handles.airspeed_trim, &(_parameters.airspeed_trim));
 	param_get(_parameter_handles.airspeed_max, &(_parameters.airspeed_max));
 	param_get(_parameter_handles.airspeed_disabled, &(_parameters.airspeed_disabled));
-
 	param_get(_parameter_handles.pitch_limit_min, &(_parameters.pitch_limit_min));
 	param_get(_parameter_handles.pitch_limit_max, &(_parameters.pitch_limit_max));
 	param_get(_parameter_handles.throttle_min, &(_parameters.throttle_min));
@@ -385,7 +384,7 @@ FixedwingPositionControl::airspeed_poll()
 {
 	bool airspeed_valid = _airspeed_valid;
 
-	if (!_parameters.airspeed_disabled && _sub_airspeed.update()) {
+    if (!_parameters.airspeed_disabled && manualAirspeedEnabled && _sub_airspeed.update()) {
 
 		const airspeed_s &as = _sub_airspeed.get();
 
@@ -1279,7 +1278,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 	// via FW_FLAPS_TO_SCL
 	_att_sp.apply_flaps = vehicle_attitude_setpoint_s::FLAPS_TAKEOFF;
 
-	// continuously reset launch detection and runway takeoff until armed
+    // continuously reset launch detection and runway takeoff until armed
 	if (!_control_mode.flag_armed) {
 		_launchDetector.reset();
 		_launch_detection_state = LAUNCHDETECTION_RES_NONE;
@@ -1367,7 +1366,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 			_l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, ground_speed);
 			_att_sp.roll_body = _l1_control.get_roll_setpoint();
 			_att_sp.yaw_body = _l1_control.nav_bearing();
-
+            manualAirspeedEnabled = true;                  //turn on airspeed after LaunchDetection
 			/* Select throttle: only in LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS we want to use
 			 * full throttle, otherwise we use idle throttle */
 			float takeoff_throttle = _parameters.throttle_max;
@@ -1949,7 +1948,7 @@ FixedwingPositionControl::tecs_update_pitch_throttle(float alt_sp, float airspee
 			_was_in_transition = true;
 
 			// set this to transition airspeed to init tecs correctly
-			if (_parameters.airspeed_disabled) {
+            if (_parameters.airspeed_disabled && manualAirspeedEnabled) {
 				// some vtols fly without airspeed sensor
 				_asp_after_transition = _parameters.airspeed_trans;
 
