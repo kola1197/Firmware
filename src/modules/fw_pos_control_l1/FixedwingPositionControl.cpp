@@ -32,8 +32,12 @@
  ****************************************************************************/
 
 #include "FixedwingPositionControl.hpp"
+#include <thread>
 
 extern "C" __EXPORT int fw_pos_control_l1_main(int argc, char *argv[]);
+
+
+
 
 FixedwingPositionControl::FixedwingPositionControl() :
 	ModuleParams(nullptr),
@@ -1253,6 +1257,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
 	return setpoint;
 }
 
+
 void
 FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector2f &ground_speed,
 		const position_setpoint_s &pos_sp_prev, const position_setpoint_s &pos_sp_curr)
@@ -1366,7 +1371,12 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 			_l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, ground_speed);
 			_att_sp.roll_body = _l1_control.get_roll_setpoint();
 			_att_sp.yaw_body = _l1_control.nav_bearing();
-            manualAirspeedEnabled = true;                  //turn on airspeed after LaunchDetection
+            std::thread myThread([this]() {
+                sleep(3);
+                manualAirspeedEnabled = true;                 //turn on airspeed after LaunchDetection
+                });
+            myThread.detach();
+            //manualAirspeedEnabled = true;
 			/* Select throttle: only in LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS we want to use
 			 * full throttle, otherwise we use idle throttle */
 			float takeoff_throttle = _parameters.throttle_max;
