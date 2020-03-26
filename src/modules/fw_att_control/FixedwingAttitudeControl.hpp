@@ -207,6 +207,7 @@ private:
 
 		int32_t bat_scale_en;			/**< Battery scaling enabled */
 		bool airspeed_disabled;
+        int manualAirspeedCounter=0;
 
 	} _parameters{};			/**< local copies of interesting parameters */
 

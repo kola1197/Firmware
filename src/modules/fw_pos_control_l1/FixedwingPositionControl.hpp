@@ -148,6 +148,7 @@ public:
 	/** @see ModuleBase::print_status() */
 	int print_status() override;
     bool manualAirspeedEnabled = false;
+    int manualAirspeedCounter = 0;
 private:
 	orb_advert_t	_mavlink_log_pub{nullptr};
 
