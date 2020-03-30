@@ -535,7 +535,7 @@ PARAM_DEFINE_FLOAT(FW_FLAPERON_SCL, 0.0f);
  * @value 1 Airspeed disabled
  * @group FW Attitude Control
  */
-PARAM_DEFINE_INT32(FW_ARSP_MODE, 0);
+PARAM_DEFINE_INT32(FW_ARSP_MODE, 1);
 
 /**
  * Manual roll scale

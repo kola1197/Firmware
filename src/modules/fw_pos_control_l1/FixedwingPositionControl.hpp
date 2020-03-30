@@ -148,7 +148,10 @@ public:
 	/** @see ModuleBase::print_status() */
 	int print_status() override;
     bool manualAirspeedEnabled = false;
+    bool checkAirspeed = false;
     int manualAirspeedCounter = 0;
+    bool parashute_set = false;
+    int land_counter = 0 ;
 private:
 	orb_advert_t	_mavlink_log_pub{nullptr};
 
@@ -434,7 +437,8 @@ private:
 					const position_setpoint_s &pos_sp_curr);
 	void		control_landing(const Vector2f &curr_pos, const Vector2f &ground_speed, const position_setpoint_s &pos_sp_prev,
 					const position_setpoint_s &pos_sp_curr);
-
+    void		new_control_landing(const Vector2f &curr_pos, const Vector2f &ground_speed, const position_setpoint_s &pos_sp_prev,
+                                const position_setpoint_s &pos_sp_curr);
 	float		get_tecs_pitch();
 	float		get_tecs_thrust();
 
