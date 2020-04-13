@@ -994,7 +994,8 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
                                        radians(_parameters.pitch_limit_min));
 
         } else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_LAND) {
-            control_landing(curr_pos, ground_speed, pos_sp_prev, pos_sp_curr);
+            //control_landing(curr_pos, ground_speed, pos_sp_prev, pos_sp_curr);
+            new_control_landing(curr_pos, ground_speed, pos_sp_prev, pos_sp_curr);
 
         } else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF) {
             control_takeoff(curr_pos, ground_speed, pos_sp_prev, pos_sp_curr);
@@ -1008,6 +1009,54 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         /* reset takeoff/launch state */
         if (pos_sp_curr.type != position_setpoint_s::SETPOINT_TYPE_TAKEOFF) {
             reset_takeoff_state();
+        }
+
+        if (pos_sp_curr.type != position_setpoint_s::SETPOINT_TYPE_LOITERUP) {
+            /* waypoint is a loiter waypoint */
+            _l1_control.navigate_loiter(curr_wp, curr_pos, pos_sp_curr.loiter_radius,
+                                        pos_sp_curr.loiter_direction, nav_speed_2d);
+            _att_sp.roll_body = _l1_control.get_roll_setpoint();
+            _att_sp.yaw_body = _l1_control.nav_bearing();
+
+            float alt_sp = pos_sp_curr.alt;
+
+            if (pos_sp_next.type == position_setpoint_s::SETPOINT_TYPE_LAND && pos_sp_next.valid
+                && _l1_control.circle_mode() && _parameters.land_early_config_change == 1) {
+                // We're in a loiter directly before a landing WP. Enable our landing configuration (flaps,
+                // landing airspeed and potentially tighter throttle control) already such that we don't
+                // have to do this switch (which can cause significant altitude errors) close to the ground.
+                _tecs.set_time_const_throt(_parameters.land_throtTC_scale * _parameters.time_const_throt);
+                mission_airspeed = _parameters.land_airspeed_scale * _parameters.airspeed_min;
+                _att_sp.apply_flaps = true;
+            }
+
+            if (in_takeoff_situation()) {
+                alt_sp = max(alt_sp, _takeoff_ground_alt + _parameters.climbout_diff);
+                _att_sp.roll_body = constrain(_att_sp.roll_body, radians(-5.0f), radians(5.0f));
+            }
+
+            if (_land_abort) {
+                if (pos_sp_curr.alt - _global_pos.alt < _parameters.climbout_diff) {
+                    // aborted landing complete, normal loiter over landing point
+                    abort_landing(false);
+
+                } else {
+                    // continue straight until vehicle has sufficient altitude
+                    _att_sp.roll_body = 0.0f;
+                }
+
+                _tecs.set_time_const_throt(_parameters.land_throtTC_scale * _parameters.time_const_throt);
+            }
+            alt_sp = 100;
+            tecs_update_pitch_throttle(alt_sp,
+                                       calculate_target_airspeed(mission_airspeed),
+                                       radians(_parameters.pitch_limit_min) - _parameters.pitchsp_offset_rad,
+                                       radians(_parameters.pitch_limit_max) - _parameters.pitchsp_offset_rad,
+                                       _parameters.throttle_min,
+                                       _parameters.throttle_max,
+                                       _parameters.throttle_cruise,
+                                       false,
+                                       radians(_parameters.pitch_limit_min));
         }
 
         if (was_circle_mode && !_l1_control.circle_mode()) {
@@ -1345,9 +1394,14 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 /* Inform user that launchdetection is running every 4s */
                 if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                     mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
+//                                                                                        //remove
+//                    int fd = 0;                                                         //remove
+//                    fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
+//                    ioctl(fd, PWM_SERVO_SET(2), 2000);                   //remove
+
                     int setAirspeed = 1;
                     param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
-
+                    parashute_set = false;
                     manualAirspeedEnabled = false;
                     checkAirspeed = false;
                     manualAirspeedCounter = 0;
@@ -1401,7 +1455,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 if (manualAirspeedCounter == 0) {
                     mavlink_log_critical(&_mavlink_log_pub, "Start counter 000100");
                 }
-                if (manualAirspeedCounter < 150) {
+                if (manualAirspeedCounter < 100) {                // 50 = 1 second
                     manualAirspeedCounter++;
                 } else {
                     int setAirspeed = 0;
@@ -1477,7 +1531,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                               const position_setpoint_s &pos_sp_prev,
                                               const position_setpoint_s &pos_sp_curr) {
 
-    mavlink_log_info(&_mavlink_log_pub, "welcome to the NEW Landing control");
+    //mavlink_log_info(&_mavlink_log_pub, "welcome to the NEW Landing control");
 
     Vector2f curr_wp((float) pos_sp_curr.lat, (float) pos_sp_curr.lon);
     Vector2f prev_wp{0.0f, 0.0f}; /* previous waypoint */
@@ -1498,29 +1552,70 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         }
     }
 
-    float throttle_max = min(throttle_max, _parameters.throttle_land_max);
+    float wp_distance = get_distance_to_next_waypoint((double) curr_pos(0), (double) curr_pos(1), (double) curr_wp(0),
+                                                      (double) curr_wp(1));
+    float throttle_max = _parameters.throttle_max;
 
-    if (!_land_motor_lim) {
-        _land_motor_lim = true;
-        mavlink_log_info(&_mavlink_log_pub, "Landing, limiting throttle");
-    }
+    mavlink_log_info(&_mavlink_log_pub, "distanse to point: %8.4f ", (double)wp_distance);
+
+    throttle_max = min(throttle_max, _parameters.throttle_land_max);
+    throttle_max = 15.0f;
+
+    //int fd = 0;
+    //fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
 
 /* waypoint is a plain navigation waypoint */
     _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, nav_speed_2d);
     _att_sp.roll_body = _l1_control.get_roll_setpoint();
     _att_sp.yaw_body = _l1_control.nav_bearing();
     const float airspeed_land = _parameters.land_airspeed_scale * _parameters.airspeed_min;
-    const float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
+    float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
 
-    if (!parashute_set) {
-        if (land_counter < 500) {
-            land_counter++;
-        } else {
+    if (wp_distance < 60.0f) {
+
+        if (!_land_motor_lim) {
+            _land_motor_lim = true;
+            throttle_zero = true;
             mavlink_log_info(&_mavlink_log_pub, "Landing, limiting throttle");
-            parashute_set = true;
-            //_parameters.se
+        }
+        mavlink_log_info(&_mavlink_log_pub, "dist less 50");
+        if ( wp_distance < 35.0f) {
+            if (!parashute_set)
+            mavlink_log_info(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
+            int fd = 0;
+            px4_usleep(50000);
+            fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+            bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
+
+            if (result)
+            {
+                parashute_set = true;
+                mavlink_log_info(&_mavlink_log_pub, "PARASHUTE DONE");
+            }
+
+        }
+        throttle_max = 0.0f;           //may be wrong
+        throttle_land = 0.0f;
+
+    }
+
+    if (throttle_zero)
+    {
+        throttle_max = 0.0f;           //may be wrong
+        throttle_land = 0.0f;
+    }
+
+
+    if (_land_motor_lim){
+        if (!parashute_set) {
+            if ( wp_distance < 35.0f) {
+                //mavlink_log_info(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
+                //parashute_set = true;
+                //ioctl(fd, PWM_SERVO_SET(2), 2000);
+            }
         }
     }
+
     tecs_update_pitch_throttle(pos_sp_curr.alt,
                                calculate_target_airspeed(airspeed_land),
                                radians(_parameters.pitch_limit_min) - _parameters.pitchsp_offset_rad,
@@ -1529,7 +1624,9 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                throttle_max,
                                throttle_land,
                                false,
-                               radians(_parameters.pitch_limit_min));
+                               radians(_parameters.pitch_limit_min),
+                               _land_motor_lim ? tecs_status_s::TECS_MODE_LAND_THROTTLELIM
+                               : tecs_status_s::TECS_MODE_LAND);
 
 
 }

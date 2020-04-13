@@ -152,6 +152,7 @@ public:
     int manualAirspeedCounter = 0;
     bool parashute_set = false;
     int land_counter = 0 ;
+    bool throttle_zero = false;
 private:
 	orb_advert_t	_mavlink_log_pub{nullptr};
 
