@@ -47,7 +47,7 @@ extern "C" __EXPORT int fw_att_control_main(int argc, char *argv[]);
 FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_airspeed_sub(ORB_ID(airspeed)),
 
-	/* performance counters */
+/* performance counters */
 	_loop_perf(perf_alloc(PC_ELAPSED, "fwa_dt")),
 	_nonfinite_input_perf(perf_alloc(PC_COUNT, "fwa_nani")),
 	_nonfinite_output_perf(perf_alloc(PC_COUNT, "fwa_nano"))

@@ -153,6 +153,8 @@ public:
     bool parashute_set = false;
     int land_counter = 0 ;
     bool throttle_zero = false;
+    double prevX = -239;
+	double prevY = -239;
 private:
 	orb_advert_t	_mavlink_log_pub{nullptr};
 

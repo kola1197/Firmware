@@ -15,6 +15,7 @@ uint8 VELOCITY_FRAME_LOCAL_NED = 1 # MAV_FRAME_LOCAL_NED
 uint8 VELOCITY_FRAME_BODY_NED = 8 # MAV_FRAME_BODY_NED
 uint8 SETPOINT_TYPE_LOITERUP = 10 #Loiter up test
 uint8 SETPOINT_TYPE_LOITERDOWN = 11 #Loiter up test
+uint8 SETPOINT_TYPE_CAMERAWP = 12 #Loiter up test
 
 bool valid			# true if setpoint is valid
 uint8 type			# setpoint type to adjust behavior of position controller

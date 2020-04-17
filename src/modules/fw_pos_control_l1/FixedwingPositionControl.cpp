@@ -34,6 +34,7 @@
 #include "FixedwingPositionControl.hpp"
 //#include <thread>
 
+
 extern "C" __EXPORT int fw_pos_control_l1_main(int argc, char *argv[]);
 
 
@@ -999,6 +1000,37 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
 
         } else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF) {
             control_takeoff(curr_pos, ground_speed, pos_sp_prev, pos_sp_curr);
+        } else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_CAMERAWP) {
+            /* waypoint is a plain navigation waypoint */
+            if (prevX == -239 && prevY ==-239)
+            {
+                prevX = (double) curr_pos(0);
+                prevY = (double) curr_pos(1);
+            }
+
+            _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, nav_speed_2d);
+            _att_sp.roll_body = _l1_control.get_roll_setpoint();
+            _att_sp.yaw_body = _l1_control.nav_bearing();
+
+
+            float wp_distance = get_distance_to_next_waypoint((double) curr_pos(0), (double) curr_pos(1), (double)prevX,(double)prevY);
+            if (wp_distance > 20)
+            {
+                mavlink_log_critical(&_mavlink_log_pub, "CAMERA SHOT, say cheese!");
+                prevX = (double) curr_pos(0);
+                prevY = (double) curr_pos(1);
+            }
+
+
+            tecs_update_pitch_throttle(pos_sp_curr.alt,
+                                       calculate_target_airspeed(mission_airspeed),
+                                       radians(_parameters.pitch_limit_min) - _parameters.pitchsp_offset_rad,
+                                       radians(_parameters.pitch_limit_max) - _parameters.pitchsp_offset_rad,
+                                       _parameters.throttle_min,
+                                       _parameters.throttle_max,            //may be min?
+                                       mission_throttle,                    // may be min?
+                                       false,
+                                       radians(_parameters.pitch_limit_min));
         }
 
         /* reset landing state */
