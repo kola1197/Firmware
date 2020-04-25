@@ -229,6 +229,14 @@ add_custom_target(weak_symbols
 	USES_TERMINAL
 	)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic -Wfloat-equal -Wconversion")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsign-conversion -Wcast-align -Wmissing-declarations -Wlogical-op")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdouble-promotion -Wswitch-enum -Wtype-limits -Wno-error=array-bounds")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wzero-as-null-pointer-constant -Wnon-virtual-dtor")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wsign-promo -Wold-style-cast -Wno-cast-function-type")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=deprecated-declarations")
+
+
 add_custom_target(stack_check
 	COMMAND ${CMAKE_COMMAND} -E make_directory stack_usage && ${CMAKE_OBJDUMP} -d $<TARGET_FILE:px4> | ${PX4_SOURCE_DIR}/Tools/stack_usage/checkstack.pl arm 0 > stack_usage/checkstack_output.txt 2> stack_usage/checkstack_errors.txt
 	COMMAND ${CMAKE_COMMAND} -E echo ""
@@ -385,6 +393,7 @@ ExternalProject_Add(FlameGraph
 	INSTALL_COMMAND ""
 	EXCLUDE_FROM_ALL 1
 	)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wsign-promo -Wold-style-cast -Wno-cast-function-type")
 
 add_custom_target(profile
 	COMMAND ${CMAKE_COMMAND} -E env PATH="${PX4_BINARY_DIR}/external/Source/FlameGraph:$ENV{PATH}"

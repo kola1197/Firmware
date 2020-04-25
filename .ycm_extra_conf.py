@@ -37,6 +37,7 @@ import ycm_core
 flags = [
 '-Wall',
 '-Wextra',
+ '-Wno-cast-function-type',
 '-Werror',
 #'-Wc++98-compat',
 '-Wno-long-long',

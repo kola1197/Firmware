@@ -107,6 +107,7 @@ add_custom_target(nuttx_copy_and_apps_target
 	${CMAKE_CURRENT_BINARY_DIR}/apps_copy.stamp
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wsign-promo -Wold-style-cast -Wno-cast-function-type")
 
 # If the board provides a Kconfig Use it or create an empty one
 if(EXISTS ${NUTTX_CONFIG_DIR}/Kconfig)
