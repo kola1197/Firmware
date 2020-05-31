@@ -64,6 +64,8 @@
 #include <sys/mount.h>
 #else
 #include <sys/statfs.h>
+#include <drivers/drv_pwm_output.h>
+
 #endif
 
 #ifndef __PX4_POSIX
@@ -427,7 +429,101 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
 
-	handle_message_command_both(msg, cmd_mavlink, vcmd);
+	//
+	char integer_string[32];
+    //int integer = 1234;
+    sprintf(integer_string, "%f", (double)cmd_mavlink.command);
+    char other_string[64] = "COMMAND_LONG: "; // make sure you allocate enough space to append the other string
+    strcat(other_string, integer_string);
+    _mavlink->send_statustext_critical(other_string);
+    //
+
+
+    if (cmd_mavlink.command == 60666)            //change rc in main channel
+    {
+        vehicle_command_s vcmd1 = {};
+        vcmd1.timestamp = hrt_absolute_time();
+
+        vcmd1.param1 = 0;
+        vcmd1.param2 = 0;
+        vcmd1.param3 = 0;
+        vcmd1.param4 = 0;
+        vcmd1.param5 = 0;
+        vcmd1.param6 = 0;
+        vcmd1.param7 = 0;
+        vcmd1.command = 400;
+        vcmd1.target_system = 1;
+        vcmd1.target_component = 1;
+        vcmd1.source_system = 255;
+        vcmd1.source_component = 0;
+
+        orb_advert_t _cmd_pub{nullptr};
+
+        vcmd1.confirmation = 0;
+        vcmd1.from_external = true;
+        if (_cmd_pub == nullptr) {
+            _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd1, vehicle_command_s::ORB_QUEUE_LENGTH);
+
+        } else {
+            orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
+        }
+        int fd = 0;
+
+        fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+        bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
+
+    }
+
+    if (cmd_mavlink.command == 60300)            //change rc in main channel
+    {
+        if (cmd_mavlink.param1 == 0)               // remote controller
+        {
+            ATCcommand = 5;
+            param_set(param_find("NAV_RCL_ACT"), &ATCcommand);
+            input_rc_s input_rc = {};
+            orb_advertise(ORB_ID(input_rc), &input_rc);
+            remoteMode = true;
+            _mavlink->send_statustext_critical("remote control mode");
+
+        } else if (cmd_mavlink.param1 == 1)        // channels override
+        {
+            input_rc_s input_rc = {};
+            orb_advertise(ORB_ID(input_rc), &input_rc);
+            remoteMode = false;
+            _mavlink->send_statustext_critical("channels override mode");
+        }
+    } else if (cmd_mavlink.command == 60600)
+    {
+        if (cmd_mavlink.param1 == 0)               // stop throttle
+        {
+            uint16_t *overrides [18];
+            for (int i=0;i<18;i++)
+            {
+                *overrides[i] = 0;
+            }
+            for (int i=0;i<4;i++)
+            {
+                *overrides[i] = 1500;
+            }
+            *overrides[3] = 900;
+            send_manual_overrides(*overrides);
+        } else if (cmd_mavlink.param1 == 1)        // drop parashute
+        {
+            uint16_t *overrides [18];
+            for (int i=0;i<18;i++)
+            {
+                *overrides[i] = 0;
+            }
+            for (int i=0;i<4;i++)
+            {
+                *overrides[i] = 1500;
+            }
+            *overrides[6] = 2000;
+            send_manual_overrides(*overrides);
+        }                                       //parashute
+    }
+        handle_message_command_both(msg, cmd_mavlink, vcmd);
+
 }
 
 void
@@ -449,6 +545,7 @@ MavlinkReceiver::handle_message_command_int(mavlink_message_t *msg)
 	vcmd.param6 = ((double)cmd_mavlink.y) / 1e7;
 	vcmd.param7 = cmd_mavlink.z;
 	vcmd.command = cmd_mavlink.command;
+
 	vcmd.target_system = cmd_mavlink.target_system;
 	vcmd.target_component = cmd_mavlink.target_component;
 	vcmd.source_system = msg->sysid;
@@ -531,12 +628,16 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		}
 
 		if (!send_ack) {
+//		    if (vehicle_command.command == 400)
+//		    {
+//                _mavlink->send_statustext_critical("ARM");
+//            }
 			if (_cmd_pub == nullptr) {
 				_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vehicle_command, vehicle_command_s::ORB_QUEUE_LENGTH);
 
 			} else {
 				orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vehicle_command);
-			}
+            }
 		}
 	}
 
@@ -1742,6 +1843,60 @@ MavlinkReceiver::decode_switch_pos_n(uint16_t buttons, unsigned sw)
 	}
 }
 
+void MavlinkReceiver::send_manual_overrides(uint16_t  values[])
+{
+
+    lastOverride = 0;
+    hasOverrides = true;
+    // fill uORB message
+    struct input_rc_s rc = {};
+    // metadata
+    rc.timestamp = hrt_absolute_time();
+    rc.timestamp_last_signal = rc.timestamp;
+    rc.rssi = RC_INPUT_RSSI_MAX;
+    rc.rc_failsafe = false;
+    rc.rc_lost = false;
+    rc.rc_lost_frame_count = 0;
+    rc.rc_total_frame_count = 1;
+    rc.rc_ppm_frame_length = 0;
+    //rc.input_source = input_rc_s::RC_INPUT_SOURCE_MAVLINK;
+    // channels
+    for (int i=0;i<18;i++)
+    {
+        rc.values[i] = values[i];
+    }
+
+    // check how many channels are valid
+    for (int i = 17; i >= 0; i--) {
+        const bool ignore_max = rc.values[i] == UINT16_MAX; // ignore any channel with value UINT16_MAX
+        const bool ignore_zero = (i > 7) && (rc.values[i] == 0); // ignore channel 8-18 if value is 0
+
+        if (ignore_max || ignore_zero) {
+            // set all ignored values to zero
+            rc.values[i] = 0;
+
+        } else {
+            // first channel to not ignore -> set count considering zero-based index
+            rc.channel_count = i + 1;
+            break;
+        }
+    }
+
+    // publish uORB message
+    ORB_PRIO priority = ORB_PRIO_LOW;
+    int instance; // provides the instance ID or the publication
+    if (!remoteMode)
+    {
+        rc.input_source = input_rc_s::RC_INPUT_SOURCE_MAVLINK;
+        ORB_PRIO priority = ORB_PRIO_HIGH; // since it is an override, set priority high
+        orb_publish_auto(ORB_ID(input_rc), &_rc_pub, &rc, &instance, priority);
+    }
+    else{
+        rc.input_source = input_rc_s::RC_INPUT_SOURCE_QURT;
+        ORB_PRIO priority = ORB_PRIO_LOW; // since it is an override, set priority high
+    }
+}
+
 void
 MavlinkReceiver::handle_message_rc_channels_override(mavlink_message_t *msg)
 {
@@ -1753,6 +1908,13 @@ MavlinkReceiver::handle_message_rc_channels_override(mavlink_message_t *msg)
 		return;
 	}
 
+	if (ATCcommand == 5 && !remoteMode)
+    {
+        ATCcommand = 2;
+        param_set(param_find("NAV_RCL_ACT"), &ATCcommand);
+    }
+    lastOverride = 0;
+    hasOverrides = true;
 	// fill uORB message
 	struct input_rc_s rc = {};
 	// metadata
@@ -1802,9 +1964,18 @@ MavlinkReceiver::handle_message_rc_channels_override(mavlink_message_t *msg)
 	}
 
 	// publish uORB message
+    ORB_PRIO priority = ORB_PRIO_LOW;
 	int instance; // provides the instance ID or the publication
-	ORB_PRIO priority = ORB_PRIO_HIGH; // since it is an override, set priority high
-	orb_publish_auto(ORB_ID(input_rc), &_rc_pub, &rc, &instance, priority);
+	if (!remoteMode)
+	{
+        rc.input_source = input_rc_s::RC_INPUT_SOURCE_MAVLINK;
+        ORB_PRIO priority = ORB_PRIO_HIGH; // since it is an override, set priority high
+        orb_publish_auto(ORB_ID(input_rc), &_rc_pub, &rc, &instance, priority);
+    }
+	else{
+        rc.input_source = input_rc_s::RC_INPUT_SOURCE_QURT;
+        ORB_PRIO priority = ORB_PRIO_LOW; // since it is an override, set priority high
+    }
 }
 
 void
@@ -1882,6 +2053,21 @@ MavlinkReceiver::handle_message_manual_control(mavlink_message_t *msg)
 void
 MavlinkReceiver::handle_message_heartbeat(mavlink_message_t *msg)
 {
+    lastOverride++;
+    if (lastOverride > 3 && hasOverrides)
+    {
+        _mavlink->send_statustext_critical("3 heartbeat without override");
+        uint16_t *overrides [18];
+        for (int i=0;i<18;i++)
+        {
+            *overrides[i] = 0;
+        }
+        for (int i=0;i<4;i++)
+        {
+            *overrides[i] = 1500;
+        }
+        send_manual_overrides(*overrides);
+    }
 	/* telemetry status supported only on first TELEMETRY_STATUS_ORB_ID_NUM mavlink channels */
 	if (_mavlink->get_channel() < (mavlink_channel_t)ORB_MULTI_MAX_INSTANCES) {
 		mavlink_heartbeat_t hb;
@@ -1896,6 +2082,8 @@ MavlinkReceiver::handle_message_heartbeat(mavlink_message_t *msg)
 			/* set heartbeat time and topic time and publish -
 			 * the telem status also gets updated on telemetry events
 			 */
+
+
 			tstatus.heartbeat_time = hrt_absolute_time();
 			tstatus.remote_system_id = msg->sysid;
 			tstatus.remote_component_id = msg->compid;

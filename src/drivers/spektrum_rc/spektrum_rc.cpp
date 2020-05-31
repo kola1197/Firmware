@@ -144,9 +144,11 @@ void task_main(int argc, char *argv[])
 				      input_rc);
 
 			if (rc_pub == nullptr) {
-				rc_pub = orb_advertise(ORB_ID(input_rc), &input_rc);
+                _mavlink->send_statustext_critical("nullptr");
+                rc_pub = orb_advertise(ORB_ID(input_rc), &input_rc);
 
 			} else {
+                _mavlink->send_statustext_critical("else");
 				orb_publish(ORB_ID(input_rc), rc_pub, &input_rc);
 			}
 		}

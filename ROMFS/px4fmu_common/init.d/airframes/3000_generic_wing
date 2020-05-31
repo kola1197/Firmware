@@ -8,6 +8,7 @@
 # @output MAIN1 left aileron
 # @output MAIN2 right aileron
 # @output MAIN4 throttle
+# @output MAIN5 parashute
 #
 # @output AUX1 feed-through of RC AUX1 channel
 # @output AUX2 feed-through of RC AUX2 channel

@@ -1426,6 +1426,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 /* Inform user that launchdetection is running every 4s */
                 if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                     mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
+                    landCounter=0;
 //                                                                                        //remove
 //                    int fd = 0;                                                         //remove
 //                    fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
@@ -1588,7 +1589,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                                       (double) curr_wp(1));
     float throttle_max = _parameters.throttle_max;
 
-    mavlink_log_info(&_mavlink_log_pub, "distanse to point: %8.4f ", (double)wp_distance);
+    mavlink_log_critical(&_mavlink_log_pub, "distanse to point: %8.4f ", (double)wp_distance);
 
     throttle_max = min(throttle_max, _parameters.throttle_land_max);
     throttle_max = 15.0f;
@@ -1608,24 +1609,53 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (!_land_motor_lim) {
             _land_motor_lim = true;
             throttle_zero = true;
-            mavlink_log_info(&_mavlink_log_pub, "Landing, limiting throttle");
+            mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle");
+            vehicle_command_s vcmd1 = {};
+            vcmd1.timestamp = hrt_absolute_time();
+
+            vcmd1.param1 = 0;
+            vcmd1.param2 = 0;
+            vcmd1.param3 = 0;
+            vcmd1.param4 = 0;
+            vcmd1.param5 = 0;
+            vcmd1.param6 = 0;
+            vcmd1.param7 = 0;
+            vcmd1.command = 400;
+            vcmd1.target_system = 1;
+            vcmd1.target_component = 1;
+            vcmd1.source_system = 255;
+            vcmd1.source_component = 0;
+
+            orb_advert_t _cmd_pub{nullptr};
+
+            vcmd1.confirmation = 0;
+            vcmd1.from_external = true;
+            if (_cmd_pub == nullptr) {
+                _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd1, vehicle_command_s::ORB_QUEUE_LENGTH);
+
+            } else {
+                orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
+            }
         }
-        mavlink_log_info(&_mavlink_log_pub, "dist less 50");
-        if ( wp_distance < 35.0f) {
+        mavlink_log_critical(&_mavlink_log_pub, "dist less 50");
+        if ( wp_distance < 35.0f || landCounter > 150) {
             if (!parashute_set)
-            mavlink_log_info(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
+                mavlink_log_critical(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
             int fd = 0;
+
             px4_usleep(50000);
+
             fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
             bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
 
             if (result)
             {
                 parashute_set = true;
-                mavlink_log_info(&_mavlink_log_pub, "PARASHUTE DONE");
+                mavlink_log_critical(&_mavlink_log_pub, "PARASHUTE DONE");
             }
 
         }
+        landCounter++;
         throttle_max = 0.0f;           //may be wrong
         throttle_land = 0.0f;
 

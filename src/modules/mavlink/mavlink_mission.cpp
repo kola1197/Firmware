@@ -868,6 +868,7 @@ MavlinkMissionManager::handle_mission_count(const mavlink_message_t *msg)
 
 			if (wpc.count > current_max_item_count()) {
 				PX4_DEBUG("WPM: MISSION_COUNT ERROR: too many waypoints (%d), supported: %d", wpc.count, current_max_item_count());
+                _mavlink->send_statustext_critical("to many waypoints");
 
 				send_mission_ack(_transfer_partner_sysid, _transfer_partner_compid, MAV_MISSION_NO_SPACE);
 				_transfer_in_progress = false;
@@ -876,7 +877,7 @@ MavlinkMissionManager::handle_mission_count(const mavlink_message_t *msg)
 
 			if (wpc.count == 0) {
 				PX4_DEBUG("WPM: MISSION_COUNT 0, clearing waypoints list and staying in state MAVLINK_WPM_STATE_IDLE");
-
+                _mavlink->send_statustext_critical("WPM: MISSION_COUNT 0, clearing waypoints list and staying in state MAVLINK_WPM_STATE_IDLE");
 				switch (_mission_type) {
 				case MAV_MISSION_TYPE_MISSION:
 
@@ -901,6 +902,7 @@ MavlinkMissionManager::handle_mission_count(const mavlink_message_t *msg)
 
 				default:
 					PX4_ERR("mission type %u not handled", _mission_type);
+                        _mavlink->send_statustext_critical("mission type u not handled");
 					break;
 				}
 
@@ -910,6 +912,7 @@ MavlinkMissionManager::handle_mission_count(const mavlink_message_t *msg)
 			}
 
 			PX4_DEBUG("WPM: MISSION_COUNT %u from ID %u, changing state to MAVLINK_WPM_STATE_GETLIST", wpc.count, msg->sysid);
+            _mavlink->send_statustext_critical("changing state to MAVLINK_WPM_STATE_GETLIST");
 
 			_state = MAVLINK_WPM_STATE_GETLIST;
 			_transfer_seq = 0;
@@ -924,7 +927,7 @@ MavlinkMissionManager::handle_mission_count(const mavlink_message_t *msg)
 				// We're about to write new geofence items, so take the lock. It will be released when
 				// switching back to idle
 				PX4_DEBUG("locking fence dataman items");
-
+                _mavlink->send_statustext_critical("locking fence dataman items");
 				int ret = dm_lock(DM_KEY_FENCE_POINTS);
 
 				if (ret == 0) {
@@ -932,6 +935,7 @@ MavlinkMissionManager::handle_mission_count(const mavlink_message_t *msg)
 
 				} else {
 					PX4_ERR("locking failed (%i)", errno);
+                    _mavlink->send_statustext_critical("locking failed ");
 				}
 			}
 

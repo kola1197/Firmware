@@ -155,6 +155,7 @@ public:
     bool throttle_zero = false;
     double prevX = -239;
 	double prevY = -239;
+	int landCounter = 0;
 private:
 	orb_advert_t	_mavlink_log_pub{nullptr};
 

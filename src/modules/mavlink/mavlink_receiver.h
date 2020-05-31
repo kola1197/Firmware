@@ -261,6 +261,15 @@ private:
 	int _control_mode_sub{orb_subscribe(ORB_ID(vehicle_control_mode))};
 	int _vehicle_attitude_sub{orb_subscribe(ORB_ID(vehicle_attitude))};
 
+	//here my code
+
+	int lastOverride = 0;
+    void send_manual_overrides(uint16_t *values);
+    bool hasOverrides = false;
+    bool remoteMode = false;
+    int ATCcommand = 0;
+	//end of my code
+
 	int _orb_class_instance{-1};
 
 	uint64_t _global_ref_timestamp{0};
@@ -285,4 +294,7 @@ private:
 	// Disallow copy construction and move assignment.
 	MavlinkReceiver(const MavlinkReceiver &) = delete;
 	MavlinkReceiver operator=(const MavlinkReceiver &) = delete;
+
+
+
 };
