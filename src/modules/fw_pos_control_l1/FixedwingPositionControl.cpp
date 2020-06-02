@@ -1610,32 +1610,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             _land_motor_lim = true;
             throttle_zero = true;
             mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle");
-            vehicle_command_s vcmd1 = {};
-            vcmd1.timestamp = hrt_absolute_time();
 
-            vcmd1.param1 = 0;
-            vcmd1.param2 = 0;
-            vcmd1.param3 = 0;
-            vcmd1.param4 = 0;
-            vcmd1.param5 = 0;
-            vcmd1.param6 = 0;
-            vcmd1.param7 = 0;
-            vcmd1.command = 400;
-            vcmd1.target_system = 1;
-            vcmd1.target_component = 1;
-            vcmd1.source_system = 255;
-            vcmd1.source_component = 0;
-
-            orb_advert_t _cmd_pub{nullptr};
-
-            vcmd1.confirmation = 0;
-            vcmd1.from_external = true;
-            if (_cmd_pub == nullptr) {
-                _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd1, vehicle_command_s::ORB_QUEUE_LENGTH);
-
-            } else {
-                orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
-            }
         }
         mavlink_log_critical(&_mavlink_log_pub, "dist less 50");
         if ( wp_distance < 35.0f || landCounter > 150) {
@@ -1646,12 +1621,38 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             px4_usleep(50000);
 
             fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-            bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
+            bool result = ioctl(fd, PWM_SERVO_SET(2), 1700);
 
             if (result)
             {
                 parashute_set = true;
-                mavlink_log_critical(&_mavlink_log_pub, "PARASHUTE DONE");
+                mavlink_log_critical(&_mavlink_log_pub, "PARASHUTE DONE, now disarm");
+                vehicle_command_s vcmd1 = {};
+                vcmd1.timestamp = hrt_absolute_time();
+
+                vcmd1.param1 = 0;
+                vcmd1.param2 = 0;
+                vcmd1.param3 = 0;
+                vcmd1.param4 = 0;
+                vcmd1.param5 = 0;
+                vcmd1.param6 = 0;
+                vcmd1.param7 = 0;
+                vcmd1.command = 400;
+                vcmd1.target_system = 1;
+                vcmd1.target_component = 1;
+                vcmd1.source_system = 255;
+                vcmd1.source_component = 0;
+
+                orb_advert_t _cmd_pub{nullptr};
+
+                vcmd1.confirmation = 0;
+                vcmd1.from_external = true;
+                if (_cmd_pub == nullptr) {
+                    _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd1, vehicle_command_s::ORB_QUEUE_LENGTH);
+
+                } else {
+                    orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
+                }
             }
 
         }
