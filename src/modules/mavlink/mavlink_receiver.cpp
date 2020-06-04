@@ -406,6 +406,7 @@ MavlinkReceiver::send_storage_information(int storage_id)
 void
 MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 {
+    bool my_command = false;
 	/* command */
 	mavlink_command_long_t cmd_mavlink;
 	mavlink_msg_command_long_decode(msg, &cmd_mavlink);
@@ -438,11 +439,22 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 //    _mavlink->send_statustext_critical(other_string);
     //
 
+    if (cmd_mavlink.command == 60667)            //change rc in main channel
+    {
+        my_command = true;
+        int fd;
+        fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+        bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
+        if (!result) {
+            _mavlink->send_statustext_critical("Error! Can not unhook parachute");
+        }
+    }
 
     if (cmd_mavlink.command == 60666)            //change rc in main channel
     {
+        my_command = true;
         vehicle_command_s vcmd1 = {};
-        vcmd1.timestamp = hrt_absolute_time();
+       vcmd1.timestamp = hrt_absolute_time();
 
         vcmd1.param1 = 0;
         vcmd1.param2 = 0;
@@ -470,12 +482,16 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
         int fd = 0;
 
         fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-        bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
-
+        bool result = ioctl(fd, PWM_SERVO_SET(2), 1700);
+        if (!result)
+        {
+            _mavlink->send_statustext_critical("Error! Can not release parachute");
+        }
     }
 
     if (cmd_mavlink.command == 60300)            //change rc in main channel
     {
+        my_command = true;
         if (cmd_mavlink.param1 == 0)               // remote controller
         {
             ATCcommand = 5;
@@ -494,6 +510,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
         }
     } else if (cmd_mavlink.command == 60600)
     {
+        my_command = true;
         if (cmd_mavlink.param1 == 0)               // stop throttle
         {
             uint16_t *overrides [18];
@@ -522,8 +539,10 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
             send_manual_overrides(*overrides);
         }                                       //parashute
     }
-        handle_message_command_both(msg, cmd_mavlink, vcmd);
 
+        if (!my_command) {
+            handle_message_command_both(msg, cmd_mavlink, vcmd);
+        }
 }
 
 void

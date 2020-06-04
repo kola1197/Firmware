@@ -1613,18 +1613,18 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         mavlink_log_critical(&_mavlink_log_pub, "dist less 60");
         if ( wp_distance < 35.0f || landCounter > 150) {
             if (!parashute_set)
-                mavlink_log_critical(&_mavlink_log_pub, "trying to set Parachute");
+                mavlink_log_critical(&_mavlink_log_pub, "trying to release Parachute");
             int fd = 0;
             px4_usleep(50000);
 
             fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-            bool result = ioctl(fd, PWM_SERVO_SET(5), 1700);
+            bool result = ioctl(fd, PWM_SERVO_SET(2), 1700);
 
             if (result)
             {
                 px4_usleep(50000);
                 parashute_set = true;
-                mavlink_log_critical(&_mavlink_log_pub, "Parachute done, now not disarm");
+                mavlink_log_critical(&_mavlink_log_pub, "Parachute released, now NOT disarm");
                 /*vehicle_command_s vcmd1 = {};
                 vcmd1.timestamp = hrt_absolute_time();
 
@@ -1665,10 +1665,15 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         //_flare_height = _global_pos.alt - terrain_alt;
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed )
         {
-            int fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-            bool result = ioctl(fd, PWM_SERVO_SET(5), 2000);
-            parashute_dropped = result;
-            mavlink_log_critical(&_mavlink_log_pub, "Parachute dropped");
+            if (wp_distance < 100) {
+                int fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+                bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
+                parashute_dropped = result;
+                mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
+            }
+            else {
+                mavlink_log_critical(&_mavlink_log_pub, "Distance to waypoint is to large. Can not unhook parachute!!!");
+            }
         }
     }
 
