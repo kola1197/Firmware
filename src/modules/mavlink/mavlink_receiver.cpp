@@ -430,12 +430,12 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.from_external = true;
 
 	//
-	char integer_string[32];
-    //int integer = 1234;
-    sprintf(integer_string, "%f", (double)cmd_mavlink.command);
-    char other_string[64] = "COMMAND_LONG: "; // make sure you allocate enough space to append the other string
-    strcat(other_string, integer_string);
-    _mavlink->send_statustext_critical(other_string);
+//	char integer_string[32];
+//    //int integer = 1234;
+//    sprintf(integer_string, "%f", (double)cmd_mavlink.command);
+//    char other_string[64] = "COMMAND_LONG: "; // make sure you allocate enough space to append the other string
+//    strcat(other_string, integer_string);
+//    _mavlink->send_statustext_critical(other_string);
     //
 
 

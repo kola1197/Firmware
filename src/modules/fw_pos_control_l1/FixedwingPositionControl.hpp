@@ -156,6 +156,7 @@ public:
     double prevX = -239;
 	double prevY = -239;
 	int landCounter = 0;
+	bool parashute_dropped = false;
 private:
 	orb_advert_t	_mavlink_log_pub{nullptr};
 

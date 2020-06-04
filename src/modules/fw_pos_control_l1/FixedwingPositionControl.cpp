@@ -1605,29 +1605,27 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
 
     if (wp_distance < 60.0f) {
-
-        if (!_land_motor_lim) {
+        if (!throttle_zero) {
             _land_motor_lim = true;
             throttle_zero = true;
             mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle");
-
         }
-        mavlink_log_critical(&_mavlink_log_pub, "dist less 50");
+        mavlink_log_critical(&_mavlink_log_pub, "dist less 60");
         if ( wp_distance < 35.0f || landCounter > 150) {
             if (!parashute_set)
-                mavlink_log_critical(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
+                mavlink_log_critical(&_mavlink_log_pub, "trying to set Parachute");
             int fd = 0;
-
             px4_usleep(50000);
 
             fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-            bool result = ioctl(fd, PWM_SERVO_SET(2), 1700);
+            bool result = ioctl(fd, PWM_SERVO_SET(5), 1700);
 
             if (result)
             {
+                px4_usleep(50000);
                 parashute_set = true;
-                mavlink_log_critical(&_mavlink_log_pub, "PARASHUTE DONE, now disarm");
-                vehicle_command_s vcmd1 = {};
+                mavlink_log_critical(&_mavlink_log_pub, "Parachute done, now not disarm");
+                /*vehicle_command_s vcmd1 = {};
                 vcmd1.timestamp = hrt_absolute_time();
 
                 vcmd1.param1 = 0;
@@ -1642,19 +1640,16 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                 vcmd1.target_component = 1;
                 vcmd1.source_system = 255;
                 vcmd1.source_component = 0;
-
                 orb_advert_t _cmd_pub{nullptr};
-
                 vcmd1.confirmation = 0;
                 vcmd1.from_external = true;
                 if (_cmd_pub == nullptr) {
                     _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd1, vehicle_command_s::ORB_QUEUE_LENGTH);
-
+                    orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
                 } else {
                     orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
-                }
+                }*/
             }
-
         }
         landCounter++;
         throttle_max = 0.0f;           //may be wrong
@@ -1666,10 +1661,19 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     {
         throttle_max = 0.0f;           //may be wrong
         throttle_land = 0.0f;
+        _land_motor_lim = true;
+        //_flare_height = _global_pos.alt - terrain_alt;
+        if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed )
+        {
+            int fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+            bool result = ioctl(fd, PWM_SERVO_SET(5), 2000);
+            parashute_dropped = result;
+            mavlink_log_critical(&_mavlink_log_pub, "Parachute dropped");
+        }
     }
 
 
-    if (_land_motor_lim){
+    /*if (_land_motor_lim){
         if (!parashute_set) {
             if ( wp_distance < 35.0f) {
                 //mavlink_log_info(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
@@ -1677,7 +1681,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                 //ioctl(fd, PWM_SERVO_SET(2), 2000);
             }
         }
-    }
+    }*/
 
     tecs_update_pitch_throttle(pos_sp_curr.alt,
                                calculate_target_airspeed(airspeed_land),

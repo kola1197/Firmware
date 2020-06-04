@@ -32,7 +32,6 @@
  ****************************************************************************/
 
 #include "SDP3X.hpp"
-
 /**
  * @file SDP3X.hpp
  *
@@ -128,7 +127,10 @@ SDP3X::collect()
 	int ret = transfer(nullptr, 0, &val[0], sizeof(val));
 
 	if (ret != PX4_OK) {
-		perf_count(_comms_errors);
+        orb_advert_t	_mavlink_log_pub{nullptr};
+        PX4_ERR("i2c error, reinit");
+        init_sdp3x();
+		//perf_count(_comms_errors);
 		return ret;
 	}
 
