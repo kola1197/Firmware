@@ -1352,90 +1352,47 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                     mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
                     bool result = false;
-                    int fd = 0;                                                         //remove
-                    if (landCounter < 7) {
-                        for (unsigned i = 0; i < PX4IO_SERVO_COUNT; i++) {
-                            //servo_position_t t;
-//                            io_timer_set_ccr
-                            //up_pwm_servo_set(i, t);
-                            landCounter++;
-                            mavlink_log_critical(&_mavlink_log_pub, "distanse to point: %8.4f ", (double) landCounter);
+                    int fd = 0;
+                    landCounter++;
+                    mavlink_log_critical(&_mavlink_log_pub, "Test int: %8.4f ", (double) landCounter);
 
-                            //up_pwm_servo_set(0, 1700);
-
-                            //up_pwm_servo_set(0, 1700);
-
-                        }
-                        //PX4IO px;
-                        //px.io_reg_set(PX4IO_PAGE_DIRECT_PWM, 3, 1700);
-
-                        //fd = open(PWM_OUTPUT0_DEVICE_PATH, 0);                         //remove
-                        //up_pwm_servo_set( 1, 1239);
-
-                        //up_pwm_servo_set( 2, 1700);
-                        //write
-                        //up_pwm_update();
-                        //px4_usleep(100000);
-                        //uuv_example_app( PWM_SERVO_SET(2), 1700);
-//                        fd = open(PWM_OUTPUT0_DEVICE_PATH, 0);                         //remove
-//
-//                        px4_px4_ioctl(fd, PWM_SERVO_SET_UPDATE_RATE, 0);
-//                        px4_px4_ioctl(fd, PWM_SERVO_SET(2), 1700);
-//                        px4_usleep(2542);
-
-
-                        //io_timer_set_ccr(PWM_SERVO_SET(0), 1000);
-                        for (int j = 0; j < 8; ++j) {
-                            act.control[j] = 1.0f;
-                            act0.control[j] = 1.0f;
-                            act1.control[j] = 1.0f;
-                            act2.control[j] = 1.0f;
-                            act3.control[j] = 1.0f;
-                        }
-                            //io_reg_set(PX4IO_PAGE_DIRECT_PWM, 3, arg);
-                            landCounter++;
-                            mavlink_log_critical(&_mavlink_log_pub, "+++++1");
-
-                            mavlink_log_critical(&_mavlink_log_pub, "distanse to point: %8.4f ", (double) landCounter);
-
-//                        fd = open(PWM_OUTPUT0_DEVICE_PATH, 0);                         //remove
-//                        px4_ioctl(fd, PWM_SERVO_SET_UPDATE_RATE, 0);
-//                        px4_ioctl(fd, PWM_SERVO_SET_MODE, PWM_SERVO_ENTER_TEST_MODE) ;
-//                        px4_ioctl(fd, PWM_SERVO_SET_MODE, PWM_SERVO_SET_OVERRIDE_IMMEDIATE) ;
-//
-//
-//                            result = px4_ioctl(fd, PWM_SERVO_SET(0), 1000);                   //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(1), 1000);                   //remove
-//                        landCounter++;
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(2), 1700);                   //remove
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(3), 1000);                   //remove
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(4), 1000);                   //remove
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(5), 1000);                   //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(6), 1000);                   //remove
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(7), 1000);                   //remove
-//                        //close(fd);
-//                        px4_usleep(50000);
-//                        //fd = open(PWM_OUTPUT0_DEVICE_PATH, 0);                         //remove
-//                        px4_ioctl(fd, PWM_SERVO_SET_UPDATE_RATE, 0);
-
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(0), 1000);                   //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(1), 1000);                   //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(2), 2000);                   //remove
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(3), 1000);                   //remove                        close(fd);
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(4), 1000);                   //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(5), 1000);                   //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(6), 1000);                   //remove
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(7), 1000);                   //remove
-                        //result = px4_ioctl(fd, PWM_SERVO_SET_DISABLE_LOCKDOWN, 1);                   //remove
-                        //close(fd);
-
-                    }
+//remove
+//                    if (landCounter < 7) {
+//                        for (unsigned i = 0; i < PX4IO_SERVO_COUNT; i++) {
+//                            //servo_position_t t;
+////                            io_timer_set_ccr
+//                            //up_pwm_servo_set(i, t);
+//                            mavlink_log_critical(&_mavlink_log_pub, "Test int: %8.4f ", (double) landCounter);
+//                            act3.control[5] = -1;
+//                            act.timestamp = hrt_absolute_time();
+//                            if (act_pub3 != nullptr) {
+//                                orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+//                            } else {
+//                                act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
+//                            }
+//                        }
+//                    }
+//                    if (landCounter > 10 && landCounter <15) {
+//                        mavlink_log_critical(&_mavlink_log_pub, "Now drop");
+//                        act3.control[5] = 0.7;
+//                        act.timestamp = hrt_absolute_time();
+//                        if (act_pub3 != nullptr) {
+//                            orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+//                        } else {
+//                            act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
+//                        }
+//                    }
+//                    if (landCounter > 15) {
+//                        mavlink_log_critical(&_mavlink_log_pub, "Now drop");
+//                        act3.control[5] = 1;
+//                        act.timestamp = hrt_absolute_time();
+//                        if (act_pub3 != nullptr) {
+//                            orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+//                        } else {
+//                            act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
+//                        }
+//                    }
+//                    px4_usleep(50000);
                     //result = px4_ioctl(0, PWM_SET, 1);                   //remove
 
 ////
@@ -1669,18 +1626,25 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (wp_distance < 50.0f || landCounter > 150) {
             if (!parashute_set)
                 mavlink_log_critical(&_mavlink_log_pub, "trying to release Parachute");
-            int fd = 0;
-            px4_usleep(50000);
-
-            fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-            bool result = px4_ioctl(fd, PWM_SERVO_SET(2), 1700);
-
-            if (result) {
-                px4_usleep(50000);
-                parashute_set = true;
-                mavlink_log_critical(&_mavlink_log_pub, "Parachute released, now NOT disarm");
-
+            //int fd = 0;
+            //px4_usleep(50000);
+            mavlink_log_critical(&_mavlink_log_pub, "Now drop");
+            act3.control[5] = 0.7;
+            act.timestamp = hrt_absolute_time();
+            if (act_pub3 != nullptr) {
+                orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+            } else {
+                act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
             }
+            //fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+            //bool result = px4_ioctl(fd, PWM_SERVO_SET(2), 1700);
+
+            //if (result) {
+            //    px4_usleep(50000);
+            //    parashute_set = true;
+            //    mavlink_log_critical(&_mavlink_log_pub, "Parachute released, now NOT disarm");
+
+            //}
         }
         landCounter++;
         throttle_max = 0.0f;           //may be wrong
@@ -1696,9 +1660,14 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         //_flare_height = _global_pos.alt - terrain_alt;
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
-                int fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-                bool result = px4_ioctl(fd, PWM_SERVO_SET(2), 2000);
-                parashute_dropped = result;
+                mavlink_log_critical(&_mavlink_log_pub, "Now drop");
+                act3.control[5] = 1;
+                act.timestamp = hrt_absolute_time();
+                if (act_pub3 != nullptr) {
+                    orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+                } else {
+                    act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
+                }
                 mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
             } else {
                 mavlink_log_critical(&_mavlink_log_pub,
@@ -2146,73 +2115,81 @@ FixedwingPositionControl::run() {
             Vector2f curr_pos((float) _global_pos.lat, (float) _global_pos.lon);
             Vector2f ground_speed(_global_pos.vel_n, _global_pos.vel_e);
 
-            landing_gear_s _landing_gear{};
-            _landing_gear.landing_gear = landing_gear_s::GEAR_UP;//gear.landing_gear;
+ //           landing_gear_s _landing_gear{};
+//            _landing_gear.landing_gear = landing_gear_s::GEAR_UP;//gear.landing_gear;
 
-            if (gear) {
-                _landing_gear.landing_gear = landing_gear_s::GEAR_DOWN;//gear.landing_gear;
-                gear = false;
-                for (int i=0;i<8;i++) {
-                    act.control[i] = 0.7;
-                    act0.control[i] = 0.7;
-                    act1.control[i] = 0.7;
-                    act2.control[i] = 0.7;
-                    act3.control[i] = 0.7;
-                }
+//            if (gear) {
+//                _landing_gear.landing_gear = landing_gear_s::GEAR_DOWN;//gear.landing_gear;
+//                gear = false;
+//                for (int i = 0; i < 7; i++) {
+////                    act.control[i] = 0.7;
+////                    act0.control[i] = 0.7;
+////                    act1.control[i] = 0.7;
+////                    act2.control[i] = 0.7;
+//                    act3.control[5] = 0.7;
+//                }
+//
+//            } else {
+//                for (int i = 0; i < 7; i++) {
+////                    act.control[i] = 0.2;
+////                    act0.control[i] = 0.2;
+////                    act1.control[i] = 0.2;
+////                    act2.control[i] = 0.2;
+//                    act3.control[5] = 0.2;
+//                }
+//                gear = true;
+//            }
+//            if (testInt<10)
+//            {
+//                act3.control[5] = 0.2;
+//                testInt++;
+//            } else
+//                {
+//                    act3.control[5] = 0.7;
+//
+//                }
+//            act.timestamp = hrt_absolute_time();
+//            act0.timestamp = hrt_absolute_time();
+//            act1.timestamp = hrt_absolute_time();
+//            act2.timestamp = hrt_absolute_time();
+//            act3.timestamp = hrt_absolute_time();
 
-            } else {
-                for (int i=0;i<8;i++) {
-                    act.control[i] = 0.2;
-                    act0.control[i] = 0.2;
-                    act1.control[i] = 0.2;
-                    act2.control[i] = 0.2;
-                    act3.control[i] = 0.2;
-                }
-                gear = true;
-            }
+//            _landing_gear.timestamp = hrt_absolute_time();
+//            orb_advert_t _landing_gear_pub{nullptr};
+//
+//            orb_publish(ORB_ID(landing_gear), _landing_gear_pub, &_landing_gear);
 
-            act.timestamp = hrt_absolute_time();
-            act0.timestamp = hrt_absolute_time();
-            act1.timestamp = hrt_absolute_time();
-            act2.timestamp = hrt_absolute_time();
-            act3.timestamp = hrt_absolute_time();
-
-            _landing_gear.timestamp = hrt_absolute_time();
-            orb_advert_t _landing_gear_pub{nullptr};
-
-            orb_publish(ORB_ID(landing_gear), _landing_gear_pub, &_landing_gear);
-
-            if (act_pub != nullptr) {
-                orb_publish(ORB_ID(actuator_controls), act_pub, &act);
-            } else {
-                act_pub = orb_advertise(ORB_ID(actuator_controls), &act);
-            }
-            px4_usleep(50000);
-            if (act_pub0 != nullptr) {
-                orb_publish(ORB_ID(actuator_controls_0), act_pub0, &act0);
-            } else {
-                act_pub0 = orb_advertise(ORB_ID(actuator_controls_0), &act0);
-            }
-            px4_usleep(50000);
-            if (act_pub1 != nullptr) {
-                orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-            } else {
-                act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-            }
-            px4_usleep(50000);
-            if (act_pub2 != nullptr) {
-                orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
-            } else {
-                act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
-            }
-            px4_usleep(50000);
-            if (act_pub3 != nullptr) {
-                orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
-            } else {
-                act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
-            }
-            px4_usleep(50000);
-            /*
+//            if (act_pub != nullptr) {
+//                orb_publish(ORB_ID(actuator_controls), act_pub, &act);
+//            } else {
+//                act_pub = orb_advertise(ORB_ID(actuator_controls), &act);
+//            }
+//            px4_usleep(50000);
+//            if (act_pub0 != nullptr) {
+//                orb_publish(ORB_ID(actuator_controls_0), act_pub0, &act0);
+//            } else {
+//                act_pub0 = orb_advertise(ORB_ID(actuator_controls_0), &act0);
+//            }
+//            px4_usleep(50000);
+//            if (act_pub1 != nullptr) {
+//                orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+//            } else {
+//                act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+//            }
+//            px4_usleep(50000);
+//            if (act_pub2 != nullptr) {
+//                orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
+//            } else {
+//                act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
+//            }
+//            px4_usleep(50000);
+//            if (act_pub3 != nullptr) {
+//                orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+//            } else {
+//                act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
+//            }
+//            px4_usleep(50000);
+             /*
              * Attempt to control position, on success (= sensors present and not in manual mode),
              * publish setpoint.
              */
