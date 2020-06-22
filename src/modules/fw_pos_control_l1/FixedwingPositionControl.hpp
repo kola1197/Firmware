@@ -156,6 +156,8 @@ public:
     double prevX = -239;
     double prevY = -239;
     int landCounter = 0;
+    double testDouble = 0.0;
+    int testInt = 0;
     bool parashute_dropped = false;
 private:
     orb_advert_t	_mavlink_log_pub{nullptr};
@@ -177,6 +179,13 @@ private:
     orb_advert_t	_pos_ctrl_landing_status_pub{nullptr};	///< landing status publication */
     orb_advert_t	_tecs_status_pub{nullptr};		///< TECS status publication */
 
+    orb_advert_t    act_pub{nullptr};
+    orb_advert_t    act_pub0{nullptr};
+    orb_advert_t    act_pub1{nullptr};
+    orb_advert_t    act_pub2{nullptr};
+    orb_advert_t    act_pub3{nullptr};
+    bool gear = false;
+
     orb_id_t _attitude_setpoint_id{nullptr};
 
     manual_control_setpoint_s	_manual {};			///< r/c channel data */
@@ -189,6 +198,13 @@ private:
     vehicle_local_position_s	_local_pos {};			///< vehicle local position */
     vehicle_land_detected_s		_vehicle_land_detected {};	///< vehicle land detected */
     vehicle_status_s		_vehicle_status {};		///< vehicle status */
+    struct actuator_controls_s act = {};
+    struct actuator_controls_s act0 = {};
+    struct actuator_controls_s act1 = {};
+    struct actuator_controls_s act2 = {};
+    struct actuator_controls_s act3 = {};
+
+
 
     Subscription<airspeed_s> _sub_airspeed;
     Subscription<sensor_bias_s> _sub_sensors;
