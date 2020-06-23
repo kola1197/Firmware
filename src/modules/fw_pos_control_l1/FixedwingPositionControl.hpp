@@ -157,8 +157,10 @@ public:
     double prevY = -239;
     int landCounter = 0;
     double testDouble = 0.0;
-    int testInt = 0;
+    bool testParachuteDrop = false;
     bool parashute_dropped = false;
+    bool start_parachute_release = false;
+    int parachute_release_counter = 0;
 private:
     orb_advert_t	_mavlink_log_pub{nullptr};
 
