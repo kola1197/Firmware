@@ -255,6 +255,18 @@ private:
 	orb_advert_t _transponder_report_pub{nullptr};
 	orb_advert_t _visual_odometry_pub{nullptr};
 
+	orb_advert_t    act_pub{nullptr};
+    	orb_advert_t    act_pub0{nullptr};
+    	orb_advert_t    act_pub1{nullptr};
+    	orb_advert_t    act_pub2{nullptr};
+    	orb_advert_t    act_pub3{nullptr};
+
+	struct actuator_controls_s act = {};
+    	struct actuator_controls_s act0 = {};
+    	struct actuator_controls_s act1 = {};
+    	struct actuator_controls_s act2 = {};
+    	struct actuator_controls_s act3 = {};
+
 	static constexpr int _gps_inject_data_queue_size{6};
 
 	int _actuator_armed_sub{orb_subscribe(ORB_ID(actuator_armed))};

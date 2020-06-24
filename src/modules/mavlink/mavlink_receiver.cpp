@@ -39,7 +39,7 @@
  * @author Anton Babushkin <anton@px4.io>
  * @author Thomas Gubler <thomas@px4.io>
  */
-
+#include <uORB/topics/actuator_controls.h>
 #include <airspeed/airspeed.h>
 #include <commander/px4_custom_mode.h>
 #include <conversion/rotation.h>
@@ -51,6 +51,7 @@
 #include <drivers/drv_range_finder.h>
 #include <drivers/drv_rc_input.h>
 #include <drivers/drv_tone_alarm.h>
+#include <drivers/drv_pwm_output.h>
 #include <ecl/geo/geo.h>
 
 #ifdef CONFIG_NET
@@ -426,6 +427,32 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.source_component = msg->compid;
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
+
+	switch (cmd_mavlink.command){
+	case 60666:
+		act1.control[5] = -0.9f;
+        	act1.control[6] = 0.15f;
+
+                act.timestamp = hrt_absolute_time();
+                if (act_pub1 != nullptr) {
+                        orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                } else {
+                        act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                }
+		break;
+	case 60667:
+	    {
+		int fd;
+		fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+		bool result = ioctl(fd, PWM_SERVO_SET(7), 2000);
+		if (!result) {
+			_mavlink->send_statustext_critical("Error! Can not unhook parachute");
+		}
+		break;
+	    }
+	default:
+		break;
+	}
 
 	handle_message_command_both(msg, cmd_mavlink, vcmd);
 }
