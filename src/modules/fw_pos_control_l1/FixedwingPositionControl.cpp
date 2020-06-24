@@ -1369,8 +1369,8 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 //                            io_timer_set_ccr
                         //up_pwm_servo_set(i, t);
                         //for (int i = 0; i < 7; i++) {
-                        act1.control[5] = -0.85f;
-                        act1.control[6] = 0.1f;
+                        act1.control[5] = -0.9f;
+                        act1.control[6] = 0.15f;
                         //}
                         act.timestamp = hrt_absolute_time();
                         if (act_pub1 != nullptr) {
