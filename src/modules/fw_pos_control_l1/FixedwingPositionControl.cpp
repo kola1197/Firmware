@@ -1552,14 +1552,19 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
 
     if (wp_distance < 80.0f) {
         if (!throttle_zero) {
-            double setAirspeed = 0.1;
-            param_set(param_find("FW_THR_MAX"), &setAirspeed);
+            double prelandingAirspeed = 10.0;
+            param_set(param_find("FW_THR_MAX"), &prelandingAirspeed);
 
             _land_motor_lim = true;
             throttle_zero = true;
             mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle");
         }
-        if (wp_distance < 60.0f || landCounter > 150) {
+        if (wp_distance < 50.0f || landCounter > 150) {
+            double zeroAirspeed = 0.1;
+            param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
+            param_set(param_find("FW_THR_MIN"), &zeroAirspeed);
+        }
+        if (wp_distance < 40.0f || landCounter > 150) {
             start_parachute_release = true;
         }
         landCounter++;
