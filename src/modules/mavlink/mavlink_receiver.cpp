@@ -430,6 +430,10 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 
 	switch (cmd_mavlink.command){
 	case 60666:
+	    {
+		double setAirspeed = 0.1;
+            	param_set(param_find("FW_THR_MAX"), &setAirspeed);
+
 		act1.control[5] = -0.9f;
         	act1.control[6] = 0.15f;
 
@@ -440,6 +444,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
                         act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
                 }
 		break;
+	    }
 	case 60667:
 	    {
 		int fd;
