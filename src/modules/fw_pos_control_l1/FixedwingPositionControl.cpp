@@ -1256,110 +1256,37 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
     return setpoint;
 }
 
-static int hui = 1;
-/*
+
 void
-test_land_parachute_buffer_release(){
-    //                    testParachuteDrop = true;
-//                    act3.control[5] = 0.7;
-//                    mavlink_log_critical(&_mavlink_log_pub, "Actuator #5 is now 0.7");
-//                    //px4_usleep(50000);
-//                    bool result = false;
-//                    int fd = 0;
-//                    landCounter++;
-//                    mavlink_log_critical(&_mavlink_log_pub, "Test int: %8.4f ", (double) landCounter);
-//                    mavlink_log_critical(&_mavlink_log_pub, "Test int: %8.4f ", (double) landCounter);
-                    int landCounter = 0;
-//remove
-                    if (landCounter > 2 && landCounter < 5) {
-                        mavlink_log_critical(&_mavlink_log_pub, "Buffer + Parachute");
+FixedwingPositionControl::test_land_parachute_buffer_release(){
+    landCounter++;
+    if (landCounter > 2 && landCounter < 5) {
+        mavlink_log_critical(&_mavlink_log_pub, "Buffer + Parachute");
 
-                        //servo_position_t t;
-//                            io_timer_set_ccr
-                        //up_pwm_servo_set(i, t);
-                        //for (int i = 0; i < 7; i++) {
-                        act1.control[5] = -0.85f;
-                        act1.control[6] = 0.1f;
-                        //}
-                        act.timestamp = hrt_absolute_time();
-                        if (act_pub1 != nullptr) {
-                            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-                        } else {
-                            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-                        }
+        act1.control[5] = -0.9f;
+        act1.control[6] = 0.15f;
 
-                    }
-                    if (landCounter > 4 && landCounter < 8) {
-                        mavlink_log_critical(&_mavlink_log_pub, "Now drop");
-                        //for (int i = 0; i < 7; i++) {
-                        act1.control[7] = -1.0f;
-                        //}
-                        act.timestamp = hrt_absolute_time();
-                        if (act_pub1 != nullptr) {
-                            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-                        } else {
-                            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-                        }
-                    }
-//                    if (landCounter > 4) {
-//                        mavlink_log_critical(&_mavlink_log_pub, "Now drop");
-//                        for (int i = 0; i < 7; i++) {
-//                            act1.control[i] = 1.0f;
-//                        }
-//                        act.timestamp = hrt_absolute_time();
-//                        if (act_pub1 != nullptr) {
-//                            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-//                        } else {
-//                            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-//                        }
-//                    }
-                    px4_usleep(50000);
-                    //result = px4_ioctl(0, PWM_SET, 1);                   //remove
 
-////
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(2), 1700);
-//                    if (testInt == 0) {
-//                        int fd = 0;                                                         //remove
-//                        fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(2), 1700);                   //remove
-//                        if (result)
-//                        {
-//                            mavlink_log_critical(&_mavlink_log_pub, "1700");
-//                        }
-//                        else
-//                        {
-//                            mavlink_log_critical(&_mavlink_log_pub, "1700 failed");
-//
-//                        }
-//                        close(fd);
-//
-//                    }
-//                    if (testInt == 1) {
-//                        int fd = 0;                                                         //remove
-//                        fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
-//
-//                        result = px4_ioctl(fd, PWM_SERVO_SET(2), 2000);                   //remove
-//
-//                        if (result)
-//                        {
-//                            mavlink_log_critical(&_mavlink_log_pub, "2000");
-//                        }
-//                        else
-//                        {
-//                            mavlink_log_critical(&_mavlink_log_pub, "2000 failed");
-//
-//                        }
-//                        close(fd);
-//
-//                    }
+        if (act_pub1 != nullptr) {
+            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+        } else {
+            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+        }
+    }
+    if (landCounter > 4 && landCounter < 8) {
+        mavlink_log_critical(&_mavlink_log_pub, "Now drop");
+        act1.control[7] = -1.0f;
 
-//                                                                                        //remove
-//                    int fd = 0;                                                         //remove
-//                    fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
-//                    px4_ioctl(fd, PWM_SERVO_SET(2), 2000);                   //remove
+        if (act_pub1 != nullptr) {
+            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+        } else {
+            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+        }
+    }
 
-}*/
+    px4_usleep(50000);
+
+}
 
 void
 FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector2f &ground_speed,
@@ -1490,12 +1417,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, ground_speed);
             _att_sp.roll_body = _l1_control.get_roll_setpoint();
             _att_sp.yaw_body = _l1_control.nav_bearing();
-            //std::thread myThread([this]() {
-            //    sleep(3);
-            //    manualAirspeedEnabled = true;                 //turn on airspeed after LaunchDetection
-            //    });
-            //myThread.detach();
-            //manualAirspeedEnabled = true;
+
             /* Select throttle: only in LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS we want to use
              * full throttle, otherwise we use idle throttle */
             if (checkAirspeed) {
@@ -1592,8 +1514,6 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                               const position_setpoint_s &pos_sp_prev,
                                               const position_setpoint_s &pos_sp_curr) {
 
-    //mavlink_log_info(&_mavlink_log_pub, "welcome to the NEW Landing control");
-
     Vector2f curr_wp((float) pos_sp_curr.lat, (float) pos_sp_curr.lon);
     Vector2f prev_wp{0.0f, 0.0f}; /* previous waypoint */
     Vector2f nav_speed_2d{ground_speed};
@@ -1622,8 +1542,6 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     throttle_max = min(throttle_max, _parameters.throttle_land_max);
     throttle_max = 15.0f;
 
-    //int fd = 0;
-    //fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
 
 /* waypoint is a plain navigation waypoint */
     _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, nav_speed_2d);
@@ -1643,41 +1561,6 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         }
         if (wp_distance < 60.0f || landCounter > 150) {
             start_parachute_release = true;
-//            if (!parashute_set || parachute_release_counter < 239) {
-//                mavlink_log_critical(&_mavlink_log_pub, "dist less 60");
-//               parashute_set = true;
-//                parachute_release_counter++;
-//                mavlink_log_critical(&_mavlink_log_pub, "trying to release Parachute");
-//                //int fd = 0;
-//                //px4_usleep(50000);
-//                //mavlink_log_critical(&_mavlink_log_pub, "Now drop");
-//                act3.control[5] = 0.7;
-//                act.timestamp = hrt_absolute_time();
-//                if (act_pub3 != nullptr) {
-//                    orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
-//                } else {
-//                    act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
-//                }
-//                if (act_pub3 != nullptr) {
-//                    orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
-//                } else {
-//                    act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
-//                }
-//                //px4_usleep(50001);
-//                if (parachute_release_counter == 239)
-//                {
-//                    mavlink_log_critical(&_mavlink_log_pub, "Parachute released");
-//                }
-            //           }
-            //fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-            //bool result = px4_ioctl(fd, PWM_SERVO_SET(2), 1700);
-
-            //if (result) {
-            //    px4_usleep(50000);
-            //    parashute_set = true;
-            //    mavlink_log_critical(&_mavlink_log_pub, "Parachute released, now NOT disarm");
-
-            //}
         }
         landCounter++;
     }
@@ -1685,9 +1568,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     if (start_parachute_release && parachute_release_counter < 239) {
         mavlink_log_critical(&_mavlink_log_pub, "trying to release Parachute");
         parachute_release_counter++;
-        // for (int i = 0; i < 7; i++) {
-        //     act1.control[i] = 0.7f;
-        // }
+
         act1.control[5] = -0.9f; //parachute drop
         act1.control[6] = 0.15f; //buffer drop
         parashute_set = true;
@@ -1697,7 +1578,6 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         } else {
             act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
         }
-        //px4_usleep(50001);
     }
 
     if (throttle_zero) {
@@ -1706,18 +1586,20 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         landCounter++;
         _land_motor_lim = true;
 
-        //_flare_height = _global_pos.alt - terrain_alt;
+        //bool my_land_detector = ground_speed.norm() < 3 && _airspeed < 3;
+
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
                 mavlink_log_critical(&_mavlink_log_pub, "Trying to unhook parachute");
-                //directly assigns values to the specified outputs
-                //if not mentioned, zero is assigned
+                /* закоменчено, чтобы ничего лишнего не открылось в воздухе. Сомнения в ленд детекторе
+                directly assigns values to the specified outputs
+                if not mentioned, zero is assigned
                 int fd = 0;                                                         //remove
                 fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
                 bool res = px4_ioctl(fd, PWM_SERVO_SET(7), 2000);
                 if (res) {
                     mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
-                }
+                }*/
                 parashute_dropped = true;
             } else {
                 mavlink_log_critical(&_mavlink_log_pub,
@@ -1725,17 +1607,6 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             }
         }
     }
-
-
-    /*if (_land_motor_lim){
-        if (!parashute_set) {
-            if ( wp_distance < 35.0f) {
-                //mavlink_log_info(&_mavlink_log_pub, "PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE PARASHUTE");
-                //parashute_set = true;
-                //px4_ioctl(fd, PWM_SERVO_SET(2), 2000);
-            }
-        }
-    }*/
 
     tecs_update_pitch_throttle(pos_sp_curr.alt,
                                calculate_target_airspeed(airspeed_land),

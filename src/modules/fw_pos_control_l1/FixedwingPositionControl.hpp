@@ -470,6 +470,7 @@ private:
     void		calculate_gndspeed_undershoot(const Vector2f &curr_pos, const Vector2f &ground_speed,
                                               const position_setpoint_s &pos_sp_prev, const position_setpoint_s &pos_sp_curr);
 
+    void                test_land_parachute_buffer_release();
     /**
      * Handle incoming vehicle commands
      */
