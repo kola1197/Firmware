@@ -1387,8 +1387,12 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                     int setAirspeed = 1;
                     param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
 
-                    float setTHR = 1.0;
-                    param_set(param_find("FW_THR_MAX"), &setTHR);
+                    float setThrMax = 1.0;
+                    float setThrMin = 0.1f;
+
+                    param_set(param_find("FW_THR_MAX"), &setThrMax);
+                    param_set(param_find("FW_THR_MIN"), &setThrMin);
+
                     parashute_set = false;
                     manualAirspeedEnabled = false;
                     checkAirspeed = false;
@@ -1551,20 +1555,26 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
 
     if (wp_distance < 80.0f) {
-        if (!throttle_zero) {
-            double prelandingAirspeed = 10.0;
+        if (!throttle_limited_10) {
+            float prelandingAirspeed = 0.1f;
             param_set(param_find("FW_THR_MAX"), &prelandingAirspeed);
+            mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle 15 percent");
 
             _land_motor_lim = true;
-            throttle_zero = true;
-            mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle");
+            throttle_limited_10 = true;
+
         }
-        if (wp_distance < 50.0f || landCounter > 150) {
-            double zeroAirspeed = 0.1;
+        if (!throttle_limited_0 && (wp_distance < 50.0f || landCounter > 150)) {
+            float zeroAirspeed = 0.0f;
             param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
             param_set(param_find("FW_THR_MIN"), &zeroAirspeed);
+            mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle 0");
+            throttle_limited_0 = true;
         }
-        if (wp_distance < 40.0f || landCounter > 150) {
+        if (!start_parachute_release && (wp_distance < 40.0f || landCounter > 250)) {
+            float zeroAirspeed = 0.0f;
+            param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
+            param_set(param_find("FW_THR_MIN"), &zeroAirspeed);
             start_parachute_release = true;
         }
         landCounter++;
@@ -1585,13 +1595,11 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         }
     }
 
-    if (throttle_zero) {
+    if (throttle_limited_0) {
         throttle_max = 0.0f;           //may be wrong
         throttle_land = 0.0f;
         landCounter++;
         _land_motor_lim = true;
-
-        //bool my_land_detector = ground_speed.norm() < 3 && _airspeed < 3;
 
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {

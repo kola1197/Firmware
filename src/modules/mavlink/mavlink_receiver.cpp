@@ -431,8 +431,17 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	switch (cmd_mavlink.command){
 	case 60666:
 	    {
-		double setAirspeed = 0.1;
+		float setAirspeed = 0.1f;
             	param_set(param_find("FW_THR_MAX"), &setAirspeed);
+
+		// float result = 0.0f;
+		// param_get(param_find("FW_THR_MAX"), &result);
+		// if ((result - 0.15f) < 0.0001f)
+		// 	_mavlink->send_statustext_critical("result = 0.15f ");
+
+		px4_sleep(3);
+		setAirspeed = 0.0f;
+		param_set(param_find("FW_THR_MAX"), &setAirspeed);
 
 		act1.control[5] = -0.9f;
         	act1.control[6] = 0.15f;

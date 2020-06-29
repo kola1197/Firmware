@@ -152,7 +152,8 @@ public:
     int manualAirspeedCounter = 0;
     bool parashute_set = false;
     int land_counter = 0 ;
-    bool throttle_zero = false;
+    bool throttle_limited_0 = false;
+    bool throttle_limited_10 = false;
     double prevX = -239;
     double prevY = -239;
     int landCounter = 0;
