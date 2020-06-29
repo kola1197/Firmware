@@ -40,6 +40,7 @@ px4_add_module(
 	STACK_MAIN 1200
 	SRCS
 		FixedwingPositionControl.cpp
+		mavlink_messages.cpp
 	DEPENDS
 		git_ecl
 		ecl_l1

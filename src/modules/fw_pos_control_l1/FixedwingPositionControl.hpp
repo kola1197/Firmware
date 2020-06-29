@@ -161,6 +161,11 @@ public:
     bool parashute_dropped = false;
     bool start_parachute_release = false;
     int parachute_release_counter = 0;
+    int airframe_mode = 0;        // 0 -fw , 1 - standart_plane
+    bool detect_land(float ground_speed);
+    int lastTerrain_alt = 0;
+    int landDetectorCounter = 0;
+    int counterFromRelease = 0;
 private:
     orb_advert_t	_mavlink_log_pub{nullptr};
 

@@ -64,6 +64,8 @@
 #include <sys/mount.h>
 #else
 #include <sys/statfs.h>
+#include <drivers/drv_pwm_output.h>
+
 #endif
 
 #ifndef __PX4_POSIX
@@ -427,6 +429,45 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
 
+    if (cmd_mavlink.command == 60667)            //change drop parachute
+    {
+        int fd;
+        fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+        bool result = ioctl(fd, PWM_SERVO_SET(2), 2000);
+        if (!result) {
+            _mavlink->send_statustext_critical("Error! Can not unhook parachute");
+        }
+    }
+    if (cmd_mavlink.command == 60666)            //release parachute
+    {
+        double setAirspeed = 0.1;
+        param_set(param_find("FW_THR_MAX"), &setAirspeed);
+        _mavlink->send_statustext_critical("FW_THR_MAX is zero now");
+
+
+        orb_advert_t    act_pub1{nullptr};
+        actuator_controls_s act1;
+
+        for (int i = 0; i < 7; i++) {
+            act1.control[i] = 0.7f;
+        }
+        //act1.control[5] = -0.9f;
+        //act1.control[6] = 0.15f;  //for st plane
+
+        if (act_pub1 != nullptr) {
+            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+        } else {
+            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+        }
+        if (act_pub1 != nullptr) {
+            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+        } else {
+            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+        }
+        _mavlink->send_statustext_critical("Parachute is released now");
+
+        //mavlink_msg_command_long_send();
+    }
 	handle_message_command_both(msg, cmd_mavlink, vcmd);
 }
 
