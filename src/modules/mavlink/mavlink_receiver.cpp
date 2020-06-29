@@ -436,8 +436,8 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 
 		// float result = 0.0f;
 		// param_get(param_find("FW_THR_MAX"), &result);
-		// if ((result - 0.15f) < 0.0001f)
-		// 	_mavlink->send_statustext_critical("result = 0.15f ");
+		// if ((0.1f - result) < 0.0001f)
+		// 	_mavlink->send_statustext_critical("result = 0.1f ");
 
 		px4_sleep(3);
 		setAirspeed = 0.0f;
