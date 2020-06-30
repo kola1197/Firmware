@@ -153,7 +153,7 @@ public:
     bool parashute_set = false;
     int land_counter = 0 ;
     bool throttle_limited_0 = false;
-    bool throttle_limited_10 = false;
+    bool throttle_limited_15 = false;
     double prevX = -239;
     double prevY = -239;
     int landCounter = 0;
@@ -162,6 +162,7 @@ public:
     bool parashute_dropped = false;
     bool start_parachute_release = false;
     int parachute_release_counter = 0;
+    int airframe_mode = 0;        // 0 -fw , 1 - standart_plane
 private:
     orb_advert_t	_mavlink_log_pub{nullptr};
 

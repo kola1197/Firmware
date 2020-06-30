@@ -428,24 +428,36 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
 
+	int airframe_mode = 0; // 0 - 101, 1 - diam20
+
 	switch (cmd_mavlink.command){
 	case 60666:
 	    {
-		float setAirspeed = 0.1f;
-            	param_set(param_find("FW_THR_MAX"), &setAirspeed);
+
+		float minThrottle = 0.15f;
+            	param_set(param_find("FW_THR_MAX"), &minThrottle);
 
 		// float result = 0.0f;
 		// param_get(param_find("FW_THR_MAX"), &result);
-		// if ((0.1f - result) < 0.0001f)
-		// 	_mavlink->send_statustext_critical("result = 0.1f ");
+		// if ((result - minThrottle) < 0.0001f)
+		// 	_mavlink->send_statustext_critical("set FW_THR_MAX = 0.1f");
 
-		px4_sleep(3);
-		setAirspeed = 0.0f;
-		param_set(param_find("FW_THR_MAX"), &setAirspeed);
+		px4_sleep(2);
+		minThrottle = 0.0f;
+		param_set(param_find("FW_THR_MAX"), &minThrottle);
+		param_set(param_find("FW_THR_MIN"), &minThrottle);
+		px4_sleep(1);
 
-		act1.control[5] = -0.9f;
-        	act1.control[6] = 0.15f;
+		// param_get(param_find("FW_THR_MAX"), &result);
+		// if ((result - minThrottle) < 0.0001f)
+		// 	_mavlink->send_statustext_critical("set FW_THR_MAX = 0.0f");
 
+		if (airframe_mode == 0) {
+			act1.control[5] = 0.65f;
+		} else {
+			act1.control[5] = -0.97f;
+			act1.control[6] = 0.15f;
+		}
                 act.timestamp = hrt_absolute_time();
                 if (act_pub1 != nullptr) {
                         orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
@@ -456,9 +468,39 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	    }
 	case 60667:
 	    {
-		int fd;
-		fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-		bool result = ioctl(fd, PWM_SERVO_SET(7), 2000);
+		// int nServ = 2;
+		// if (airframe_mode == 0) {
+		// 	nServ = 2;
+		// } else
+		// {
+		// 	nServ = 7;
+		// }
+		// int fd;
+		// fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
+		bool result = true;
+
+		if (airframe_mode == 0){
+			act1.control[5] = 0.92f;
+			act.timestamp = hrt_absolute_time();
+                	if (act_pub1 != nullptr) {
+                        orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                	} else {
+                        act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                	}
+			//result = ioctl(fd, PWM_SERVO_SET(nServ), 1920);
+		}
+		else
+		{
+			act1.control[7] = 1.0f;
+			act.timestamp = hrt_absolute_time();
+                	if (act_pub1 != nullptr) {
+                        orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                	} else {
+                        act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                	}
+			//result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
+		}
+
 		if (!result) {
 			_mavlink->send_statustext_critical("Error! Can not unhook parachute");
 		}

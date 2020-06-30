@@ -1382,12 +1382,18 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                     mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
 
+                    if (airframe_mode == 0) {
+                        mavlink_log_critical(&_mavlink_log_pub, "I am FIXED_WING");
+                    }
+                    if (airframe_mode == 1) {
+                        mavlink_log_critical(&_mavlink_log_pub, "I am STANDART PLANE");
+                    }
                     // test_land_parachute_buffer_release();
 
                     int setAirspeed = 1;
                     param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
 
-                    float setThrMax = 1.0;
+                    float setThrMax = 1.0f;
                     float setThrMin = 0.1f;
 
                     param_set(param_find("FW_THR_MAX"), &setThrMax);
@@ -1544,7 +1550,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     mavlink_log_critical(&_mavlink_log_pub, "distanse to point: %8.4f ", (double) wp_distance);
 
     throttle_max = min(throttle_max, _parameters.throttle_land_max);
-    throttle_max = 15.0f;
+    //throttle_max = 15.0f;
 
 
 /* waypoint is a plain navigation waypoint */
@@ -1555,13 +1561,13 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
 
     if (wp_distance < 80.0f) {
-        if (!throttle_limited_10) {
-            float prelandingAirspeed = 0.1f;
+        if (!throttle_limited_15) {
+            float prelandingAirspeed = 0.15f;
             param_set(param_find("FW_THR_MAX"), &prelandingAirspeed);
             mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle 15 percent");
 
             _land_motor_lim = true;
-            throttle_limited_10 = true;
+            throttle_limited_15 = true;
 
         }
         if (!throttle_limited_0 && (wp_distance < 50.0f || landCounter > 150)) {
@@ -1584,8 +1590,14 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         mavlink_log_critical(&_mavlink_log_pub, "trying to release Parachute");
         parachute_release_counter++;
 
-        act1.control[5] = -0.9f; //parachute drop
-        act1.control[6] = 0.15f; //buffer drop
+        if (airframe_mode == 0) {
+            act1.control[5] = 0.65f;
+        }
+        if (airframe_mode == 1) {
+            act1.control[5] = -0.97f; //parachute drop
+            act1.control[6] = 0.15f; //buffer drop
+        }
+
         parashute_set = true;
         act.timestamp = hrt_absolute_time();
         if (act_pub1 != nullptr) {
@@ -1604,6 +1616,49 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
                 mavlink_log_critical(&_mavlink_log_pub, "Trying to unhook parachute");
+
+                if (airframe_mode == 0){
+                act1.control[5] = 0.92f;
+                act.timestamp = hrt_absolute_time();
+                        if (act_pub1 != nullptr) {
+                            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                        } else {
+                            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                        }
+                //result = ioctl(fd, PWM_SERVO_SET(nServ), 1920);
+		        }
+                if (airframe_mode == 1){
+                    act1.control[7] = 1.0f;
+                    act.timestamp = hrt_absolute_time();
+                            if (act_pub1 != nullptr) {
+                                orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                            } else {
+                                act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                            }
+                    //result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
+                }
+
+                /*
+                if (airframe_mode == 0) {
+                    int fd = 0;                                                         //remove
+                    fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
+                    bool res = px4_ioctl(fd, PWM_SERVO_SET(2), 192
+
+                    0);
+                    if (res) {
+                        mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
+                    }
+                    parashute_dropped = true;
+                }
+                if (airframe_mode == 1) {
+                    act1.control[7] = -1.0f;
+                    if (act_pub1 != nullptr) {
+                        orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                    } else {
+                        act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                    }
+                }
+                */
                 /* закоменчено, чтобы ничего лишнего не открылось в воздухе. Сомнения в ленд детекторе
                 directly assigns values to the specified outputs
                 if not mentioned, zero is assigned
@@ -1613,7 +1668,6 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                 if (res) {
                     mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
                 }*/
-                parashute_dropped = true;
             } else {
                 mavlink_log_critical(&_mavlink_log_pub,
                                      "Distance to waypoint is to large. Can not unhook parachute!!!");
