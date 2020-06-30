@@ -1608,14 +1608,20 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     const float airspeed_land = _parameters.land_airspeed_scale * _parameters.airspeed_min;
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
 
-    if (wp_distance < 80.0f) {
+    if (wp_distance < 100.0f) {
         if (!throttle_zero) {
-            double setAirspeed = 0.1;
-            param_set(param_find("FW_THR_MAX"), &setAirspeed);
+            if (wp_distance < 80.0f)
+            {
+            double setTHR = 0.1;
+            param_set(param_find("FW_THR_MAX"), &setTHR);
 
             _land_motor_lim = true;
             throttle_zero = true;
             mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle");
+            } else{
+                double setTHR = 0.25;
+                param_set(param_find("FW_THR_MAX"), &setTHR);
+            }
         }
         if (wp_distance < 60.0f || landCounter > 150) {
             start_parachute_release = true;
@@ -1644,7 +1650,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
         }
     }
-    bool new_my_land_detector = detect_land(ground_speed.norm());
+    //bool new_my_land_detector = detect_land(ground_speed.norm());
     if (throttle_zero) {
         throttle_max = 0.0f;           //may be wrong
         throttle_land = 0.0f;
@@ -1655,13 +1661,13 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
                 mavlink_log_critical(&_mavlink_log_pub, "Trying to unhook parachute");
-//                act3.control[5] = 1;
-//                act.timestamp = hrt_absolute_time();
-//                if (act_pub3 != nullptr) {
-//                    orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
-//                } else {
-//                    act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
-//                }
+                act3.control[5] = 1;
+                act.timestamp = hrt_absolute_time();
+                if (act_pub3 != nullptr) {
+                    orb_publish(ORB_ID(actuator_controls_3), act_pub3, &act3);
+                } else {
+                    act_pub3 = orb_advertise(ORB_ID(actuator_controls_3), &act3);
+                }
                 if (airframe_mode == 0) {
                     int fd = 0;                                                         //remove
                     fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove

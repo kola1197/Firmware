@@ -281,7 +281,14 @@ private:
 	param_t _p_flow_maxr{PARAM_INVALID};
 	param_t _p_flow_minhgt{PARAM_INVALID};
 	param_t _p_flow_maxhgt{PARAM_INVALID};
+    //here my code
 
+    int lastOverride = 0;
+    void send_manual_overrides(uint16_t *values);
+    bool hasOverrides = false;
+    bool remoteMode = false;
+    int ATCcommand = 0;
+    //end of my code
 	// Disallow copy construction and move assignment.
 	MavlinkReceiver(const MavlinkReceiver &) = delete;
 	MavlinkReceiver operator=(const MavlinkReceiver &) = delete;

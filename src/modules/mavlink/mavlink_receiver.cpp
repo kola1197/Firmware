@@ -429,6 +429,25 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
 
+    if (cmd_mavlink.command == 60300)            //change rc in main channel
+    {
+        if (cmd_mavlink.param1 == 0)               // remote controller
+        {
+            ATCcommand = 5;
+            param_set(param_find("NAV_RCL_ACT"), &ATCcommand);
+            input_rc_s input_rc = {};
+            orb_advertise(ORB_ID(input_rc), &input_rc);
+            remoteMode = true;
+            _mavlink->send_statustext_critical("remote control mode");
+
+        } else if (cmd_mavlink.param1 == 1)        // channels override
+        {
+            input_rc_s input_rc = {};
+            orb_advertise(ORB_ID(input_rc), &input_rc);
+            remoteMode = false;
+            _mavlink->send_statustext_critical("channels override mode");
+        }
+    }
     if (cmd_mavlink.command == 60667)            //change drop parachute
     {
         int fd;
@@ -1920,9 +1939,79 @@ MavlinkReceiver::handle_message_manual_control(mavlink_message_t *msg)
 	}
 }
 
+void MavlinkReceiver::send_manual_overrides(uint16_t  values[])
+{
+
+    lastOverride = 0;
+    hasOverrides = true;
+    // fill uORB message
+    struct input_rc_s rc = {};
+    // metadata
+    rc.timestamp = hrt_absolute_time();
+    rc.timestamp_last_signal = rc.timestamp;
+    rc.rssi = RC_INPUT_RSSI_MAX;
+    rc.rc_failsafe = false;
+    rc.rc_lost = false;
+    rc.rc_lost_frame_count = 0;
+    rc.rc_total_frame_count = 1;
+    rc.rc_ppm_frame_length = 0;
+    //rc.input_source = input_rc_s::RC_INPUT_SOURCE_MAVLINK;
+    // channels
+    for (int i=0;i<18;i++)
+    {
+        rc.values[i] = values[i];
+    }
+
+    // check how many channels are valid
+    for (int i = 17; i >= 0; i--) {
+        const bool ignore_max = rc.values[i] == UINT16_MAX; // ignore any channel with value UINT16_MAX
+        const bool ignore_zero = (i > 7) && (rc.values[i] == 0); // ignore channel 8-18 if value is 0
+
+        if (ignore_max || ignore_zero) {
+            // set all ignored values to zero
+            rc.values[i] = 0;
+
+        } else {
+            // first channel to not ignore -> set count considering zero-based index
+            rc.channel_count = i + 1;
+            break;
+        }
+    }
+
+    // publish uORB message
+    ORB_PRIO priority = ORB_PRIO_LOW;
+    int instance; // provides the instance ID or the publication
+    if (!remoteMode)
+    {
+        rc.input_source = input_rc_s::RC_INPUT_SOURCE_MAVLINK;
+        ORB_PRIO priority = ORB_PRIO_HIGH; // since it is an override, set priority high
+        orb_publish_auto(ORB_ID(input_rc), &_rc_pub, &rc, &instance, priority);
+    }
+    else{
+        rc.input_source = input_rc_s::RC_INPUT_SOURCE_QURT;
+        ORB_PRIO priority = ORB_PRIO_LOW; // since it is an override, set priority high
+    }
+}
+
 void
 MavlinkReceiver::handle_message_heartbeat(mavlink_message_t *msg)
 {
+
+    lastOverride++;
+    if (lastOverride > 3 && hasOverrides)
+    {
+        _mavlink->send_statustext_critical("3 heartbeat without override");
+        uint16_t *overrides [18];
+        for (int i=0;i<18;i++)
+        {
+            *overrides[i] = 0;
+        }
+        for (int i=0;i<4;i++)
+        {
+            *overrides[i] = 1500;
+        }
+        send_manual_overrides(*overrides);
+    }
 	/* telemetry status supported only on first TELEMETRY_STATUS_ORB_ID_NUM mavlink channels */
 	if (_mavlink->get_channel() < (mavlink_channel_t)ORB_MULTI_MAX_INSTANCES) {
 		mavlink_heartbeat_t hb;
