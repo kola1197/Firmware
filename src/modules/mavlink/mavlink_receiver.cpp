@@ -428,7 +428,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
 
-	int airframe_mode = 0; // 0 - 101, 1 - diam20
+	int airframe_mode = 1; // 0 - 101, 1 - diam20
 
 	switch (cmd_mavlink.command){
 	case 60666:
@@ -444,9 +444,65 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 
 		px4_sleep(2);
 		minThrottle = 0.0f;
-		param_set(param_find("FW_THR_MAX"), &minThrottle);
 		param_set(param_find("FW_THR_MIN"), &minThrottle);
+		param_set(param_find("FW_THR_MAX"), &minThrottle);
+
+		vehicle_command_s vcmd1 = {};
+                vcmd1.timestamp = hrt_absolute_time();
+                vcmd1.param1 = 0;
+                vcmd1.param2 = 0;
+                vcmd1.param3 = 0;
+                vcmd1.param4 = 0;
+                vcmd1.param5 = 0;
+                vcmd1.param6 = 0;
+                vcmd1.param7 = 0;
+                vcmd1.command = 400;
+                vcmd1.target_system = 1;
+                vcmd1.target_component = 1;
+                vcmd1.source_system = 255;
+                vcmd1.source_component = 0;
+
+                orb_advert_t _cmd_pub{nullptr};
+
+                vcmd1.confirmation = 0;
+                vcmd1.from_external = true;
+
+                if (_cmd_pub == nullptr) {
+                    _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd1, vehicle_command_s::ORB_QUEUE_LENGTH);
+
+                    orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
+                } else {
+                    orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd1);
+                }
+
 		px4_sleep(1);
+
+		//-SET-MODE------------------------------
+
+		// vehicle_command_s vcmd_mode = {};
+		// vcmd_mode.timestamp = hrt_absolute_time();
+
+		// /* copy the content of mavlink_command_long_t cmd_mavlink into command_t cmd */
+		// vcmd_mode.param1 = 29;
+		// vcmd_mode.param2 = 50593792;
+		// vcmd_mode.param3 = 3;
+
+		// vcmd_mode.command = vehicle_command_s::VEHICLE_CMD_DO_SET_MODE;
+		// vcmd_mode.target_system = 1;
+		// vcmd_mode.target_component = MAV_COMP_ID_ALL;
+		// vcmd_mode.source_system = msg->sysid;
+		// vcmd_mode.source_component = msg->compid;
+		// vcmd_mode.confirmation = true;
+		// vcmd_mode.from_external = true;
+
+		// if (_cmd_pub == nullptr) {
+		// 	_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_mode, vehicle_command_s::ORB_QUEUE_LENGTH);
+		// 	orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd_mode);
+		// } else {
+		// 	orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd_mode);
+		// }
+
+		//-SET-MODE------------------------------
 
 		// param_get(param_find("FW_THR_MAX"), &result);
 		// if ((result - minThrottle) < 0.0001f)

@@ -1547,7 +1547,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                                       (double) curr_wp(1));
     float throttle_max = _parameters.throttle_max;
 
-    mavlink_log_critical(&_mavlink_log_pub, "distanse to point: %8.4f ", (double) wp_distance);
+    //mavlink_log_critical(&_mavlink_log_pub, "distanse to point: %8.4f ", (double) wp_distance);
 
     throttle_max = min(throttle_max, _parameters.throttle_land_max);
     //throttle_max = 15.0f;
@@ -1572,22 +1572,22 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         }
         if (!throttle_limited_0 && (wp_distance < 50.0f || landCounter > 150)) {
             float zeroAirspeed = 0.0f;
-            param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
             param_set(param_find("FW_THR_MIN"), &zeroAirspeed);
-            mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle 0");
+            param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
+            mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle 0. landCounter: %8.4f", (double) landCounter);
             throttle_limited_0 = true;
         }
-        if (!start_parachute_release && (wp_distance < 40.0f || landCounter > 250)) {
+        if (!start_parachute_release && (wp_distance < 20.0f || landCounter > 250)) {
             float zeroAirspeed = 0.0f;
-            param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
             param_set(param_find("FW_THR_MIN"), &zeroAirspeed);
+            param_set(param_find("FW_THR_MAX"), &zeroAirspeed);
             start_parachute_release = true;
         }
         landCounter++;
     }
 
     if (start_parachute_release && parachute_release_counter < 239) {
-        mavlink_log_critical(&_mavlink_log_pub, "trying to release Parachute");
+        mavlink_log_critical(&_mavlink_log_pub, "Release parachute");
         parachute_release_counter++;
 
         if (airframe_mode == 0) {
@@ -1615,36 +1615,34 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
 
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
-                mavlink_log_critical(&_mavlink_log_pub, "Trying to unhook parachute");
+                mavlink_log_critical(&_mavlink_log_pub, "Trying to UNHOOK parachute");
 
-                if (airframe_mode == 0){
-                act1.control[5] = 0.92f;
-                act.timestamp = hrt_absolute_time();
-                        if (act_pub1 != nullptr) {
-                            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-                        } else {
-                            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-                        }
-                //result = ioctl(fd, PWM_SERVO_SET(nServ), 1920);
-		        }
-                if (airframe_mode == 1){
-                    act1.control[7] = 1.0f;
-                    act.timestamp = hrt_absolute_time();
-                            if (act_pub1 != nullptr) {
-                                orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-                            } else {
-                                act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-                            }
-                    //result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
-                }
+                // if (airframe_mode == 0){
+                // act1.control[5] = 0.92f;
+                // act.timestamp = hrt_absolute_time();
+                //         if (act_pub1 != nullptr) {
+                //             orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                //         } else {
+                //             act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                //         }
+                // //result = ioctl(fd, PWM_SERVO_SET(nServ), 1920);
+		        // }
+                // if (airframe_mode == 1){
+                //     act1.control[7] = 1.0f;
+                //     act.timestamp = hrt_absolute_time();
+                //             if (act_pub1 != nullptr) {
+                //                 orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                //             } else {
+                //                 act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                //             }
+                //     //result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
+                // }
 
                 /*
                 if (airframe_mode == 0) {
                     int fd = 0;                                                         //remove
                     fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);                         //remove
-                    bool res = px4_ioctl(fd, PWM_SERVO_SET(2), 192
-
-                    0);
+                    bool res = px4_ioctl(fd, PWM_SERVO_SET(2), 1920);
                     if (res) {
                         mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
                     }
