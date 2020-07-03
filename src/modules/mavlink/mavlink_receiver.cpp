@@ -428,7 +428,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 	vcmd.confirmation = cmd_mavlink.confirmation;
 	vcmd.from_external = true;
 
-	int airframe_mode = 1; // 0 - 101, 1 - diam20
+	int airframe_mode = 0; // 0 - 101, 1 - diam20
 
 	switch (cmd_mavlink.command){
 	case 60666:
@@ -548,6 +548,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 		else
 		{
 			act1.control[7] = 1.0f;
+			act1.control[6] = 0.0;
 			act.timestamp = hrt_absolute_time();
                 	if (act_pub1 != nullptr) {
                         orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
