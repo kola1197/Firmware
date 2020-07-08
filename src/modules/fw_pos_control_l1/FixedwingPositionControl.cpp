@@ -1615,8 +1615,9 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
 
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
-                mavlink_log_critical(&_mavlink_log_pub, "Trying to UNHOOK parachute");
 
+                mavlink_log_critical(&_mavlink_log_pub, "UNHOOK parachute");
+                parashute_dropped = true;
                 // if (airframe_mode == 0){
                 // act1.control[5] = 0.92f;
                 // act.timestamp = hrt_absolute_time();
@@ -1646,7 +1647,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                     if (res) {
                         mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
                     }
-                    parashute_dropped = true;
+
                 }
                 if (airframe_mode == 1) {
                     act1.control[7] = -1.0f;

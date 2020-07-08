@@ -117,6 +117,9 @@ public:
 	static void *start_helper(void *context);
 
 private:
+	int lastOverride = 0;
+	bool hasOverrides = false;
+	bool remoteMode = false;
 
 	void acknowledge(uint8_t sysid, uint8_t compid, uint16_t command, uint8_t result);
 
@@ -196,6 +199,8 @@ private:
 	void send_flight_information();
 
 	void send_storage_information(int storage_id);
+
+	void send_manual_overrides (uint16_t values[]);
 
 	Mavlink	*_mavlink;
 
