@@ -45,8 +45,6 @@
 #include "mavlink_command_sender.h"
 #include "mavlink_simple_analyzer.h"
 #include "mavlink_high_latency2.h"
-#include <v2.0/diam/mavlink.h>
-#include <v2.0/diam/mavlink_msg_stg_status.h>
 
 #include <commander/px4_custom_mode.h>
 #include <drivers/drv_pwm_output.h>

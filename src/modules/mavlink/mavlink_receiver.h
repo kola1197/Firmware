@@ -89,7 +89,6 @@
 #include "mavlink_mission.h"
 #include "mavlink_parameters.h"
 #include "mavlink_timesync.h"
-#include <v2.0/diam/mavlink_msg_stg_status.h>
 
 class Mavlink;
 

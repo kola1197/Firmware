@@ -146,7 +146,7 @@ COMMENT_END_RE='\*\/'
 # Regular expression to match C++ unsafe headers. We currently don't have any C++ unsafe headers, do we?
 # v2.0/standard/mavlink.h is not unsafe, but this way the script will leave it alone and not
 # move it above function declarations that need to be declared before including it.
-UNSAFE_HEADERS_RE='(v2\.0\/diam\/mavlink\.h)'
+UNSAFE_HEADERS_RE='(v2\.0\/common\/mavlink\.h)'
 #UNSAFE_HEADERS_RE='(stm32\.h|arch\/board\/board\.h)'
 
 # Find all submodules.

@@ -62,7 +62,7 @@
 #include <uORB/topics/uavcan_parameter_request.h>
 #include <uORB/topics/uavcan_parameter_value.h>
 
-#include <v2.0/diam/mavlink.h>
+#include <v2.0/common/mavlink.h>
 
 
 /**
