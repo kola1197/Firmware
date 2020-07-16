@@ -131,7 +131,13 @@ MavlinkReceiver::acknowledge(uint8_t sysid, uint8_t compid, uint16_t command, ui
 void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
+	mavlink_log_critical(&_mavlink_log_pub, "msg-msgid =  %d", msg->msgid);
 	switch (msg->msgid) {
+	case MAVLINK_MSG_ID_STG_STATUS:
+		_mavlink->send_statustext_critical("STG_STATUS");
+		handle_message_stg_status_msg(msg);
+		break;
+
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		handle_message_command_long(msg);
 		break;
@@ -440,7 +446,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 		// float result = 0.0f;
 		// param_get(param_find("FW_THR_MAX"), &result);
 		// if ((result - minThrottle) < 0.0001f)
-		// 	_mavlink->send_statustext_critical("set FW_THR_MAX = 0.1f");
+		//_mavlink->send_statustext_critical("set FW_THR_MAX = 0.1f");
 
 		px4_sleep(2);
 		minThrottle = 0.0f;
@@ -2854,9 +2860,10 @@ MavlinkReceiver::receive_thread(void *arg)
 
 			if (_mavlink->get_client_source_initialized()) {
 				/* if read failed, this loop won't execute */
+
 				for (ssize_t i = 0; i < nread; i++) {
 					if (mavlink_parse_char(_mavlink->get_channel(), buf[i], &msg, &_status)) {
-
+						mavlink_log_critical(&_mavlink_log_pub, "read...");
 						/* check if we received version 2 and request a switch. */
 						if (!(_mavlink->get_status()->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1)) {
 							/* this will only switch to proto version 2 if allowed in settings */
@@ -2893,6 +2900,8 @@ MavlinkReceiver::receive_thread(void *arg)
 				if (nread > 0) {
 					_mavlink->count_rxbytes(nread);
 				}
+			} else {
+				_mavlink->send_statustext_critical("fail read");
 			}
 		}
 
@@ -2956,4 +2965,39 @@ MavlinkReceiver::receive_start(pthread_t *thread, Mavlink *parent)
 	pthread_create(thread, &receiveloop_attr, MavlinkReceiver::start_helper, (void *)parent);
 
 	pthread_attr_destroy(&receiveloop_attr);
+}
+
+void
+MavlinkReceiver::handle_message_stg_status_msg(mavlink_message_t *msg)
+{
+	_mavlink->send_statustext_critical("recieve stg status");
+
+	mavlink_stg_status_t status;
+	mavlink_msg_stg_status_decode(msg, &status);
+
+	struct stg_status_s f;
+	memset(&f, 0, sizeof(f));
+
+	f.timestamp = hrt_absolute_time();
+	f.voltage_battery = status.voltage_battery;
+	f.voltage_generator = status.voltage_generator;
+	f.current_battery = status.current_battery;
+	f.current_generator = status.current_generator;
+	f.power_load = status.power_load;
+	f.current_charge = status.current_charge;
+	f.temperarture_bridge = status.temperarture_bridge;
+	f.voltage_drop = status.voltage_drop;
+	f.rpm_cranckshaft = status.rpm_cranckshaft;
+	f.halls_errors = status.halls_errors;
+	f.uptime = status.uptime;
+	f.current_starter = status.current_starter;
+	f.motor_state = status.motor_state;
+	f.stg_errors_bitmask = status.stg_errors_bitmask;
+
+
+	if (_stg_status_msg_pub == nullptr) {
+		_stg_status_msg_pub = orb_advertise(ORB_ID(stg_status), &f);
+	} else {
+		orb_publish(ORB_ID(stg_status), _stg_status_msg_pub, &f);
+	}
 }

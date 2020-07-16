@@ -82,12 +82,14 @@
 #include <uORB/topics/vehicle_rates_setpoint.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_trajectory_waypoint.h>
+#include <uORB/topics/stg_status.h>
 
 #include "mavlink_ftp.h"
 #include "mavlink_log_handler.h"
 #include "mavlink_mission.h"
 #include "mavlink_parameters.h"
 #include "mavlink_timesync.h"
+#include <v2.0/diam/mavlink_msg_stg_status.h>
 
 class Mavlink;
 
@@ -168,6 +170,7 @@ private:
 	void handle_message_set_position_target_local_ned(mavlink_message_t *msg);
 	void handle_message_trajectory_representation_waypoints(mavlink_message_t *msg);
 	void handle_message_vision_position_estimate(mavlink_message_t *msg);
+	void handle_message_stg_status_msg(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 
@@ -259,6 +262,8 @@ private:
 	orb_advert_t _trajectory_waypoint_pub{nullptr};
 	orb_advert_t _transponder_report_pub{nullptr};
 	orb_advert_t _visual_odometry_pub{nullptr};
+	orb_advert_t _stg_status_msg_pub{nullptr};
+	orb_advert_t	_mavlink_log_pub{nullptr};
 
 	orb_advert_t    act_pub{nullptr};
     	orb_advert_t    act_pub0{nullptr};

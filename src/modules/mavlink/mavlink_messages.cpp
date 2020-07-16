@@ -45,6 +45,8 @@
 #include "mavlink_command_sender.h"
 #include "mavlink_simple_analyzer.h"
 #include "mavlink_high_latency2.h"
+#include <v2.0/diam/mavlink.h>
+#include <v2.0/diam/mavlink_msg_stg_status.h>
 
 #include <commander/px4_custom_mode.h>
 #include <drivers/drv_pwm_output.h>
@@ -106,6 +108,7 @@
 #include <uORB/topics/sensor_mag.h>
 #include <uORB/topics/vehicle_air_data.h>
 #include <uORB/topics/vehicle_magnetometer.h>
+#include <uORB/topics/stg_status.h>
 #include <uORB/uORB.h>
 
 using matrix::wrap_2pi;
@@ -4836,6 +4839,77 @@ protected:
 	}
 };
 
+class MavlinkStreamStgStatus : public MavlinkStream
+{
+public:
+    const char *get_name() const
+    {
+	    return MavlinkStreamStgStatus::get_name_static();
+    }
+    static const char *get_name_static()
+    {
+	    return "STG_STATUS";
+    }
+    static uint16_t get_id_static()
+    {
+	    return MAVLINK_MSG_ID_STG_STATUS;
+    }
+    uint16_t get_id()
+    {
+	    return get_id_static();
+    }
+    static MavlinkStream *new_instance(Mavlink *mavlink)
+    {
+        return new MavlinkStreamStgStatus(mavlink);
+    }
+    unsigned get_size()
+    {
+        return MAVLINK_MSG_ID_STG_STATUS_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+    }
+
+private:
+    MavlinkOrbSubscription *_sub;
+    uint64_t _stg_status_time{0};
+
+    /* do not allow top copying this class */
+    MavlinkStreamStgStatus(MavlinkStreamStgStatus &) = delete;
+    MavlinkStreamStgStatus& operator = (const MavlinkStreamStgStatus &) = delete;
+
+protected:
+    explicit MavlinkStreamStgStatus(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _sub(_mavlink->add_orb_subscription(ORB_ID(stg_status))),  // make sure you enter the name of your uORB topic here
+        _stg_status_time(0)
+    {}
+
+    bool send(const hrt_abstime t)
+    {
+        struct stg_status_s _stg_status = {};    //make sure stg_status_struct_s is the definition of your uORB topic
+
+        if (_sub->update(&_stg_status_time, &_stg_status)) {
+           	 mavlink_stg_status_t _msg_stg_status;  //make sure mavlink_stg_status_t is the definition of your custom MAVLink message
+
+		_msg_stg_status.voltage_battery = _stg_status.voltage_battery;
+		_msg_stg_status.voltage_generator = _stg_status.voltage_generator;
+		_msg_stg_status.current_battery = _stg_status.current_battery;
+		_msg_stg_status.current_generator = _stg_status.current_generator;
+		_msg_stg_status.power_load = _stg_status.power_load;
+		_msg_stg_status.current_charge = _stg_status.current_charge;
+		_msg_stg_status.temperarture_bridge = _stg_status.temperarture_bridge;
+		_msg_stg_status.voltage_drop = _stg_status.voltage_drop;
+		_msg_stg_status.rpm_cranckshaft = _stg_status.rpm_cranckshaft;
+		_msg_stg_status.halls_errors = _stg_status.halls_errors;
+		_msg_stg_status.uptime = _stg_status.uptime;
+		_msg_stg_status.current_starter = _stg_status.current_starter;
+		_msg_stg_status.motor_state = _stg_status.motor_state;
+		_msg_stg_status.stg_errors_bitmask = _stg_status.stg_errors_bitmask;
+
+           	 mavlink_msg_stg_status_send_struct(_mavlink->get_channel(), &_msg_stg_status);
+        }
+
+        return true;
+    }
+};
+
 static const StreamListItem streams_list[] = {
 	StreamListItem(&MavlinkStreamHeartbeat::new_instance, &MavlinkStreamHeartbeat::get_name_static, &MavlinkStreamHeartbeat::get_id_static),
 	StreamListItem(&MavlinkStreamStatustext::new_instance, &MavlinkStreamStatustext::get_name_static, &MavlinkStreamStatustext::get_id_static),
@@ -4893,7 +4967,8 @@ static const StreamListItem streams_list[] = {
 	StreamListItem(&MavlinkStreamHighLatency2::new_instance, &MavlinkStreamHighLatency2::get_name_static, &MavlinkStreamHighLatency2::get_id_static),
 	StreamListItem(&MavlinkStreamGroundTruth::new_instance, &MavlinkStreamGroundTruth::get_name_static, &MavlinkStreamGroundTruth::get_id_static),
 	StreamListItem(&MavlinkStreamPing::new_instance, &MavlinkStreamPing::get_name_static, &MavlinkStreamPing::get_id_static),
-	StreamListItem(&MavlinkStreamOrbitStatus::new_instance, &MavlinkStreamOrbitStatus::get_name_static, &MavlinkStreamOrbitStatus::get_id_static)
+	StreamListItem(&MavlinkStreamOrbitStatus::new_instance, &MavlinkStreamOrbitStatus::get_name_static, &MavlinkStreamOrbitStatus::get_id_static),
+	StreamListItem(&MavlinkStreamStgStatus::new_instance, &MavlinkStreamStgStatus::get_name_static, &MavlinkStreamStgStatus::get_id_static)
 };
 
 const char *get_stream_name(const uint16_t msg_id)
