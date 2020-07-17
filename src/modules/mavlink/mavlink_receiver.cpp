@@ -131,10 +131,8 @@ MavlinkReceiver::acknowledge(uint8_t sysid, uint8_t compid, uint16_t command, ui
 void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
-	mavlink_log_critical(&_mavlink_log_pub, "msg-msgid =  %d", msg->msgid);
 	switch (msg->msgid) {
 	case MAVLINK_MSG_ID_STG_STATUS:
-		_mavlink->send_statustext_critical("STG_STATUS");
 		handle_message_stg_status_msg(msg);
 		break;
 
@@ -2863,7 +2861,6 @@ MavlinkReceiver::receive_thread(void *arg)
 
 				for (ssize_t i = 0; i < nread; i++) {
 					if (mavlink_parse_char(_mavlink->get_channel(), buf[i], &msg, &_status)) {
-						mavlink_log_critical(&_mavlink_log_pub, "read...");
 						/* check if we received version 2 and request a switch. */
 						if (!(_mavlink->get_status()->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1)) {
 							/* this will only switch to proto version 2 if allowed in settings */
@@ -2894,6 +2891,8 @@ MavlinkReceiver::receive_thread(void *arg)
 						/* handle packet with parent object */
 						_mavlink->handle_message(&msg);
 					}
+				} {
+					//_mavlink->send_statustext_critical("fail read");
 				}
 
 				/* count received bytes (nread will be -1 on read error) */
@@ -2901,7 +2900,7 @@ MavlinkReceiver::receive_thread(void *arg)
 					_mavlink->count_rxbytes(nread);
 				}
 			} else {
-				_mavlink->send_statustext_critical("fail read");
+				//_mavlink->send_statustext_critical("fail read");
 			}
 		}
 
@@ -2970,13 +2969,13 @@ MavlinkReceiver::receive_start(pthread_t *thread, Mavlink *parent)
 void
 MavlinkReceiver::handle_message_stg_status_msg(mavlink_message_t *msg)
 {
-	_mavlink->send_statustext_critical("recieve stg status");
-
 	mavlink_stg_status_t status;
 	mavlink_msg_stg_status_decode(msg, &status);
 
 	struct stg_status_s f;
 	memset(&f, 0, sizeof(f));
+
+	mavlink_log_critical(&_mavlink_log_pub, "volt_bat = %d  volt_gen = %d  err_mask = %d", status.voltage_battery, status.voltage_generator, status.stg_errors_bitmask);
 
 	f.timestamp = hrt_absolute_time();
 	f.voltage_battery = status.voltage_battery;
