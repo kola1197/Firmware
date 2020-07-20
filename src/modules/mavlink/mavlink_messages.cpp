@@ -590,9 +590,9 @@ protected:
 			msg.onboard_control_sensors_enabled = status.onboard_control_sensors_enabled;
 			msg.onboard_control_sensors_health = status.onboard_control_sensors_health;
 			msg.load = cpuload.load * 1000.0f;
-			msg.voltage_battery = (battery_status.connected) ? battery_status.voltage_filtered_v * 1000.0f : UINT16_MAX;
-			msg.current_battery = (battery_status.connected) ? battery_status.current_filtered_a * 100.0f : -1;
-			msg.battery_remaining = (battery_status.connected) ? ceilf(battery_status.remaining * 100.0f) : -1;
+			msg.voltage_battery = 25000;
+			msg.current_battery = 15000;
+			msg.battery_remaining = 50000;
 			// TODO: fill in something useful in the fields below
 			msg.drop_rate_comm = 0;
 			msg.errors_comm = 0;
@@ -603,33 +603,33 @@ protected:
 
 			mavlink_msg_sys_status_send_struct(_mavlink->get_channel(), &msg);
 
-			/* battery status message with higher resolution */
-			mavlink_battery_status_t bat_msg = {};
-			bat_msg.id = 0;
-			bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
-			bat_msg.type = MAV_BATTERY_TYPE_LIPO;
-			bat_msg.current_consumed = (battery_status.connected) ? battery_status.discharged_mah : -1;
-			bat_msg.energy_consumed = -1;
-			bat_msg.current_battery = (battery_status.connected) ? battery_status.current_filtered_a * 100 : -1;
-			bat_msg.battery_remaining = (battery_status.connected) ? ceilf(battery_status.remaining * 100.0f) : -1;
-			bat_msg.temperature = (battery_status.connected) ? (int16_t)battery_status.temperature : INT16_MAX;
-			//bat_msg.average_current_battery = (battery_status.connected) ? battery_status.average_current_a * 100.0f : -1;
-			//bat_msg.serial_number = (battery_status.connected) ? battery_status.serial_number : 0;
-			//bat_msg.capacity = (battery_status.connected) ? battery_status.capacity : 0;
-			//bat_msg.cycle_count = (battery_status.connected) ? battery_status.cycle_count : UINT16_MAX;
-			//bat_msg.run_time_to_empty = (battery_status.connected) ? battery_status.run_time_to_empty * 60 : 0;
-			//bat_msg.average_time_to_empty = (battery_status.connected) ? battery_status.average_time_to_empty * 60 : 0;
+			// /* battery status message with higher resolution */
+			// mavlink_battery_status_t bat_msg = {};
+			// bat_msg.id = 0;
+			// bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
+			// bat_msg.type = MAV_BATTERY_TYPE_LIPO;
+			// bat_msg.current_consumed = (battery_status.connected) ? battery_status.discharged_mah : -1;
+			// bat_msg.energy_consumed = -1;
+			// bat_msg.current_battery = (battery_status.connected) ? battery_status.current_filtered_a * 100 : -1;
+			// bat_msg.battery_remaining = (battery_status.connected) ? ceilf(battery_status.remaining * 100.0f) : -1;
+			// bat_msg.temperature = (battery_status.connected) ? (int16_t)battery_status.temperature : INT16_MAX;
+			// //bat_msg.average_current_battery = (battery_status.connected) ? battery_status.average_current_a * 100.0f : -1;
+			// //bat_msg.serial_number = (battery_status.connected) ? battery_status.serial_number : 0;
+			// //bat_msg.capacity = (battery_status.connected) ? battery_status.capacity : 0;
+			// //bat_msg.cycle_count = (battery_status.connected) ? battery_status.cycle_count : UINT16_MAX;
+			// //bat_msg.run_time_to_empty = (battery_status.connected) ? battery_status.run_time_to_empty * 60 : 0;
+			// //bat_msg.average_time_to_empty = (battery_status.connected) ? battery_status.average_time_to_empty * 60 : 0;
 
-			for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
-				if ((int)i < battery_status.cell_count && battery_status.connected) {
-					bat_msg.voltages[i] = (battery_status.voltage_v / battery_status.cell_count) * 1000.0f;
+			// for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
+			// 	if ((int)i < battery_status.cell_count && battery_status.connected) {
+			// 		bat_msg.voltages[i] = (battery_status.voltage_v / battery_status.cell_count) * 1000.0f;
 
-				} else {
-					bat_msg.voltages[i] = UINT16_MAX;
-				}
-			}
+			// 	} else {
+			// 		bat_msg.voltages[i] = UINT16_MAX;
+			// 	}
+			// }
 
-			mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
+			// mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
 
 			return true;
 		}
@@ -4881,28 +4881,56 @@ protected:
 
     bool send(const hrt_abstime t)
     {
+		
         struct stg_status_s _stg_status = {};    //make sure stg_status_struct_s is the definition of your uORB topic
 
         if (_sub->update(&_stg_status_time, &_stg_status)) {
            	 mavlink_stg_status_t _msg_stg_status;  //make sure mavlink_stg_status_t is the definition of your custom MAVLink message
+			
+			_msg_stg_status.voltage_battery = _stg_status.voltage_battery;
+			_msg_stg_status.voltage_generator = _stg_status.voltage_generator;
+			_msg_stg_status.current_battery = _stg_status.current_battery;
+			_msg_stg_status.current_generator = _stg_status.current_generator;
+			_msg_stg_status.power_load = _stg_status.power_load;
+			_msg_stg_status.current_charge = _stg_status.current_charge;
+			_msg_stg_status.temperarture_bridge = _stg_status.temperarture_bridge;
+			_msg_stg_status.voltage_drop = _stg_status.voltage_drop;
+			_msg_stg_status.rpm_cranckshaft = _stg_status.rpm_cranckshaft;
+			_msg_stg_status.halls_errors = _stg_status.halls_errors;
+			_msg_stg_status.uptime = _stg_status.uptime;
+			_msg_stg_status.current_starter = _stg_status.current_starter;
+			_msg_stg_status.motor_state = _stg_status.motor_state;
+			_msg_stg_status.stg_errors_bitmask = _stg_status.stg_errors_bitmask;
 
-		_msg_stg_status.voltage_battery = _stg_status.voltage_battery;
-		_msg_stg_status.voltage_generator = _stg_status.voltage_generator;
-		_msg_stg_status.current_battery = _stg_status.current_battery;
-		_msg_stg_status.current_generator = _stg_status.current_generator;
-		_msg_stg_status.power_load = _stg_status.power_load;
-		_msg_stg_status.current_charge = _stg_status.current_charge;
-		_msg_stg_status.temperarture_bridge = _stg_status.temperarture_bridge;
-		_msg_stg_status.voltage_drop = _stg_status.voltage_drop;
-		_msg_stg_status.rpm_cranckshaft = _stg_status.rpm_cranckshaft;
-		_msg_stg_status.halls_errors = _stg_status.halls_errors;
-		_msg_stg_status.uptime = _stg_status.uptime;
-		_msg_stg_status.current_starter = _stg_status.current_starter;
-		_msg_stg_status.motor_state = _stg_status.motor_state;
-		_msg_stg_status.stg_errors_bitmask = _stg_status.stg_errors_bitmask;
+			mavlink_msg_stg_status_send_struct(_mavlink->get_channel(), &_msg_stg_status);
+        
+			/* battery status message with higher resolution */
+			mavlink_battery_status_t bat_msg = {};
 
-           	 mavlink_msg_stg_status_send_struct(_mavlink->get_channel(), &_msg_stg_status);
-        }
+			bat_msg.id = 0;
+			bat_msg.type = MAV_BATTERY_TYPE_LIPO;
+			bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
+			bat_msg.current_consumed = (float)_stg_status.power_load;
+			bat_msg.current_battery = _stg_status.current_battery;
+			bat_msg.energy_consumed = (float)_stg_status.power_load;
+			bat_msg.time_remaining = _stg_status.uptime;
+			bat_msg.battery_remaining = _stg_status.current_charge;
+			bat_msg.temperature = _stg_status.temperarture_bridge;
+			bat_msg.charge_state = 8;
+			//bat_msg.average_current_battery = (battery_status.connected) ? battery_status.average_current_a * 100.0f : -1;
+			//bat_msg.serial_number = (battery_status.connected) ? battery_status.serial_number : 0;
+			//bat_msg.capacity = (battery_status.connected) ? battery_status.capacity : 0;
+			//bat_msg.cycle_count = (battery_status.connected) ? battery_status.cycle_count : UINT16_MAX;
+			//bat_msg.run_time_to_empty = (battery_status.connected) ? battery_status.run_time_to_empty * 60 : 0;
+			//bat_msg.average_time_to_empty = (battery_status.connected) ? battery_status.average_time_to_empty * 60 : 0;
+			for (int i = 0; i < 4; i ++)
+				bat_msg.voltages[i] = (float)_stg_status.voltage_battery;
+			
+
+			mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
+
+		
+		}
 
         return true;
     }
