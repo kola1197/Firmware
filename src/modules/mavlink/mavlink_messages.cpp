@@ -543,11 +543,11 @@ public:
 private:
 	MavlinkOrbSubscription *_status_sub;
 	MavlinkOrbSubscription *_cpuload_sub;
-	MavlinkOrbSubscription *_battery_status_sub;
+	MavlinkOrbSubscription *_stg_status_sub;
 
 	uint64_t _status_timestamp{0};
 	uint64_t _cpuload_timestamp{0};
-	uint64_t _battery_status_timestamp{0};
+	uint64_t _stg_status_timestamp{0};
 
 	/* do not allow top copying this class */
 	MavlinkStreamSysStatus(MavlinkStreamSysStatus &) = delete;
@@ -557,27 +557,27 @@ protected:
 	explicit MavlinkStreamSysStatus(Mavlink *mavlink) : MavlinkStream(mavlink),
 		_status_sub(_mavlink->add_orb_subscription(ORB_ID(vehicle_status))),
 		_cpuload_sub(_mavlink->add_orb_subscription(ORB_ID(cpuload))),
-		_battery_status_sub(_mavlink->add_orb_subscription(ORB_ID(battery_status)))
+		_stg_status_sub(_mavlink->add_orb_subscription(ORB_ID(stg_status)))
 	{}
 
 	bool send(const hrt_abstime t)
 	{
 		vehicle_status_s status = {};
 		cpuload_s cpuload = {};
-		battery_status_s battery_status = {};
+		stg_status_s stg_status = {}; 
 
 		const bool updated_status = _status_sub->update(&_status_timestamp, &status);
 		const bool updated_cpuload = _cpuload_sub->update(&_cpuload_timestamp, &cpuload);
-		const bool updated_battery = _battery_status_sub->update(&_battery_status_timestamp, &battery_status);
+		const bool updated_stg = _stg_status_sub->update(&_stg_status_timestamp, &stg_status);
 
-		if (updated_status || updated_battery || updated_cpuload) {
+		if (updated_status || updated_stg || updated_cpuload) {
 
 			if (!updated_status) {
 				_status_sub->update(&status);
 			}
 
-			if (!updated_battery) {
-				_battery_status_sub->update(&battery_status);
+			if (!updated_stg) {
+				_stg_status_sub->update(&stg_status);
 			}
 
 			if (!updated_cpuload) {
@@ -590,9 +590,9 @@ protected:
 			msg.onboard_control_sensors_enabled = status.onboard_control_sensors_enabled;
 			msg.onboard_control_sensors_health = status.onboard_control_sensors_health;
 			msg.load = cpuload.load * 1000.0f;
-			msg.voltage_battery = 25000;
-			msg.current_battery = 15000;
-			msg.battery_remaining = 50000;
+			msg.voltage_battery = stg_status.voltage_battery;
+			msg.current_battery = stg_status.current_battery;
+			msg.battery_remaining = stg_status.current_charge;
 			// TODO: fill in something useful in the fields below
 			msg.drop_rate_comm = 0;
 			msg.errors_comm = 0;
@@ -4910,21 +4910,14 @@ protected:
 			bat_msg.id = 0;
 			bat_msg.type = MAV_BATTERY_TYPE_LIPO;
 			bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
-			bat_msg.current_consumed = (float)_stg_status.power_load;
+			bat_msg.current_consumed = _stg_status.rpm_cranckshaft;
 			bat_msg.current_battery = _stg_status.current_battery;
-			bat_msg.energy_consumed = (float)_stg_status.power_load;
+			bat_msg.energy_consumed = _stg_status.rpm_cranckshaft;
 			bat_msg.time_remaining = _stg_status.uptime;
 			bat_msg.battery_remaining = _stg_status.current_charge;
 			bat_msg.temperature = _stg_status.temperarture_bridge;
-			bat_msg.charge_state = 8;
-			//bat_msg.average_current_battery = (battery_status.connected) ? battery_status.average_current_a * 100.0f : -1;
-			//bat_msg.serial_number = (battery_status.connected) ? battery_status.serial_number : 0;
-			//bat_msg.capacity = (battery_status.connected) ? battery_status.capacity : 0;
-			//bat_msg.cycle_count = (battery_status.connected) ? battery_status.cycle_count : UINT16_MAX;
-			//bat_msg.run_time_to_empty = (battery_status.connected) ? battery_status.run_time_to_empty * 60 : 0;
-			//bat_msg.average_time_to_empty = (battery_status.connected) ? battery_status.average_time_to_empty * 60 : 0;
-			for (int i = 0; i < 4; i ++)
-				bat_msg.voltages[i] = (float)_stg_status.voltage_battery;
+			bat_msg.charge_state = _stg_status.current_starter;
+			bat_msg.voltages[0] = _stg_status.voltage_generator;
 			
 
 			mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
