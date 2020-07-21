@@ -57,6 +57,7 @@
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/actuator_outputs.h>
+#include <uORB/topics/adc_report.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/camera_trigger.h>
@@ -544,10 +545,12 @@ private:
 	MavlinkOrbSubscription *_status_sub;
 	MavlinkOrbSubscription *_cpuload_sub;
 	MavlinkOrbSubscription *_stg_status_sub;
+	MavlinkOrbSubscription *_adc_report_sub;
 
 	uint64_t _status_timestamp{0};
 	uint64_t _cpuload_timestamp{0};
 	uint64_t _stg_status_timestamp{0};
+	uint64_t _adc_report_timestamp{0};
 
 	/* do not allow top copying this class */
 	MavlinkStreamSysStatus(MavlinkStreamSysStatus &) = delete;
@@ -557,7 +560,8 @@ protected:
 	explicit MavlinkStreamSysStatus(Mavlink *mavlink) : MavlinkStream(mavlink),
 		_status_sub(_mavlink->add_orb_subscription(ORB_ID(vehicle_status))),
 		_cpuload_sub(_mavlink->add_orb_subscription(ORB_ID(cpuload))),
-		_stg_status_sub(_mavlink->add_orb_subscription(ORB_ID(stg_status)))
+		_stg_status_sub(_mavlink->add_orb_subscription(ORB_ID(stg_status))),
+		_adc_report_sub(_mavlink->add_orb_subscription(ORB_ID(adc_report)))
 	{}
 
 	bool send(const hrt_abstime t)
@@ -565,12 +569,14 @@ protected:
 		vehicle_status_s status = {};
 		cpuload_s cpuload = {};
 		stg_status_s stg_status = {}; 
+		adc_report_s adc_rep = {};
 
 		const bool updated_status = _status_sub->update(&_status_timestamp, &status);
 		const bool updated_cpuload = _cpuload_sub->update(&_cpuload_timestamp, &cpuload);
 		const bool updated_stg = _stg_status_sub->update(&_stg_status_timestamp, &stg_status);
+		const bool updated_adc = _adc_report_sub->update(&_adc_report_timestamp, &adc_rep);
 
-		if (updated_status || updated_stg || updated_cpuload) {
+		if (updated_status || updated_stg || updated_cpuload || updated_adc) {
 
 			if (!updated_status) {
 				_status_sub->update(&status);
@@ -584,13 +590,17 @@ protected:
 				_cpuload_sub->update(&cpuload);
 			}
 
+			if (!updated_adc) {
+				_adc_report_sub->update(&adc_rep);
+			}
+
 			mavlink_sys_status_t msg = {};
 
 			msg.onboard_control_sensors_present = status.onboard_control_sensors_present;
 			msg.onboard_control_sensors_enabled = status.onboard_control_sensors_enabled;
 			msg.onboard_control_sensors_health = status.onboard_control_sensors_health;
 			msg.load = cpuload.load * 1000.0f;
-			msg.voltage_battery = stg_status.voltage_battery;
+			msg.voltage_battery = (uint16_t)(adc_rep.channel_value[10] * 100);
 			msg.current_battery = stg_status.current_battery;
 			msg.battery_remaining = stg_status.current_charge;
 			// TODO: fill in something useful in the fields below
@@ -4916,8 +4926,12 @@ protected:
 			bat_msg.time_remaining = _stg_status.uptime;
 			bat_msg.battery_remaining = _stg_status.current_charge;
 			bat_msg.temperature = _stg_status.temperarture_bridge;
-			bat_msg.charge_state = _stg_status.current_starter;
+			bat_msg.charge_state = _stg_status.current_generator;
 			bat_msg.voltages[0] = _stg_status.voltage_generator;
+			bat_msg.voltages[1] = _stg_status.voltage_battery;
+			bat_msg.voltages[2] = _stg_status.power_load;
+			bat_msg.voltages[3] = _stg_status.voltage_drop;
+			
 			
 
 			mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
