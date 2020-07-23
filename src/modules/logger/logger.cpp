@@ -618,7 +618,7 @@ void Logger::add_default_topics()
 	add_topic("actuator_controls_1", 100);
 	add_topic("actuator_outputs", 100);
 	add_topic("airspeed", 200);
-	add_topic("adc_report");
+	add_topic("adc_report", 200);
 	add_topic("battery_status", 500);
 	add_topic("camera_capture");
 	add_topic("camera_trigger");
@@ -659,7 +659,7 @@ void Logger::add_default_topics()
 	add_topic("vehicle_status_flags");
 	add_topic("vtol_vehicle_status", 200);
 	add_topic("wind_estimate", 200);
-	add_topic("stg_status");
+	add_topic("stg_status", 200);
 
 
 #ifdef CONFIG_ARCH_BOARD_PX4_SITL
