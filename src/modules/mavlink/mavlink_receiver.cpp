@@ -474,21 +474,31 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 
 	int airframe_mode = 0; // 0 - 101, 1 - diam20
 
+	bool target_ok = evaluate_target_ok(cmd_mavlink.command, cmd_mavlink.target_system, cmd_mavlink.target_component);
+
+	bool send_ack = true;
+	uint8_t result = vehicle_command_ack_s::VEHICLE_RESULT_ACCEPTED;
+
+	if (!target_ok) {
+		acknowledge(msg->sysid, msg->compid, cmd_mavlink.command, vehicle_command_ack_s::VEHICLE_RESULT_FAILED);
+		return;
+	}
+
 	switch (cmd_mavlink.command){
-	case 60666:
+	case MAV_CMD_RELEASE_BUFFER_PARACHUTE:
 	    {
-			float minThrottle = 0.15f;
-					param_set(param_find("FW_THR_MAX"), &minThrottle);
+			float maxThrottle = 0.15f;
+			param_set(param_find("FW_THR_MAX"), &maxThrottle);
 
 			// float result = 0.0f;
 			// param_get(param_find("FW_THR_MAX"), &result);
 			// if ((result - minThrottle) < 0.0001f)
 			//_mavlink->send_statustext_critical("set FW_THR_MAX = 0.1f");
 
-			//px4_sleep(2);
-			minThrottle = 0.0f;
-			param_set(param_find("FW_THR_MIN"), &minThrottle);
-			param_set(param_find("FW_THR_MAX"), &minThrottle);
+			px4_sleep(2);
+			maxThrottle = 0.0f;
+			param_set(param_find("FW_THR_MIN"), &maxThrottle);
+			param_set(param_find("FW_THR_MAX"), &maxThrottle);
 
 			vehicle_command_s vcmd1 = {};
 			vcmd1.timestamp = hrt_absolute_time();
@@ -545,7 +555,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 
 			//-SET-MODE------------------------------
 
-			//px4_sleep(1);
+			px4_sleep(1);
 
 			if (airframe_mode == 0) {
 				act1.control[5] = 0.65f;
@@ -561,7 +571,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 				act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
 			break;
 	    }
-	case 60667:
+	case MAV_CMD_DROP_BUFFER_PARACHUTE:
 	    {
 			// int nServ = 2;
 			// if (airframe_mode == 0) {
@@ -572,7 +582,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			// }
 			// int fd;
 			// fd = open(PWM_OUTPUT0_DEVICE_PATH, O_RDWR);
-			bool result = true;
+			//bool result = true;
 
 			if (airframe_mode == 0) {
 				act1.control[5] = 0.92f;
@@ -595,12 +605,12 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 				//result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
 			}
 
-			if (!result) {
-				_mavlink->send_statustext_critical("Error! Can not unhook parachute");
-			}
+			// if (!result) {
+			// 	_mavlink->send_statustext_critical("Error! Can not unhook parachute");
+			// }
 			break;
 	    }
-	case 60300:
+	case MAV_CMD_SWITCH_REMOTE_OVERRIDE_MODE:
 	    {
 			if(cmd_mavlink.param1 == 0 ){ //remote controller
 				int ATCcommand = 5 ;
@@ -616,27 +626,26 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 				_mavlink->send_statustext_critical("channels_override_mode");
 			}
 	    }
-	case 60606:
+	case MAV_CMD_DO_ENGINE_ACTION:
 		{
+			//test gimbal
+			act2.control[2] = 0.2;
+
+			if (act_pub2 != nullptr) {
+				orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
+			} else {
+				act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
+			}
+
 			px4_arch_configgpio(GPIO_GPIO4_OUTPUT);
 			if (cmd_mavlink.param1 == 0){
-				px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, 0);
+				px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, false);
 			}else{
-				px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, 3.3f);
+				px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, true);
 			}
 		}
 	default:
 		break;
-	}
-
-	bool target_ok = evaluate_target_ok(cmd_mavlink.command, cmd_mavlink.target_system, cmd_mavlink.target_component);
-
-	bool send_ack = true;
-	uint8_t result = vehicle_command_ack_s::VEHICLE_RESULT_ACCEPTED;
-
-	if (!target_ok) {
-		acknowledge(msg->sysid, msg->compid, cmd_mavlink.command, vehicle_command_ack_s::VEHICLE_RESULT_FAILED);
-		return;
 	}
 
 	if (cmd_mavlink.command == MAV_CMD_STG_ACTION){
