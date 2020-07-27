@@ -470,6 +470,12 @@ Navigator::run()
 				if (cmd.param2 > FLT_EPSILON) {
 					// XXX not differentiating ground and airspeed yet
 					set_cruising_speed(cmd.param2);
+					float minArspd = 18.f;
+					float maxArspd = 20.f;
+					param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
+                    			param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
+					param_set(param_find("FW_AIRSPD_TRIM"), &maxArspd);
+
 
 				} else {
 					set_cruising_speed();
