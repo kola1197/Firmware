@@ -1399,6 +1399,13 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                     param_set(param_find("FW_THR_MAX"), &setThrMax);
                     param_set(param_find("FW_THR_MIN"), &setThrMin);
 
+                    float minArspd = 20.f;
+					float trimArspd = 22.f;
+					float maxArspd = 30.f;
+					param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
+                    param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
+					param_set(param_find("FW_AIRSPD_TRIM"), &trimArspd);
+
                     parashute_set = false;
                     manualAirspeedEnabled = false;
                     checkAirspeed = false;
