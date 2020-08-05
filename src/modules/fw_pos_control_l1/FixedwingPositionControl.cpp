@@ -850,15 +850,13 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
             nav_speed_2d = air_speed_2d;
         }
 
+//GIMBALL YAW LOGIC
         float air_nav_angle = acosf((air_speed_2d * nav_speed_2d) / (air_speed_2d.length() * nav_speed_2d.length()));
         float pwm_yaw;
         if ((air_speed_2d(0) * nav_speed_2d(1) - air_speed_2d(1) * nav_speed_2d(0)) > 0)
             pwm_yaw = air_nav_angle / (float)M_PI;
         else
             pwm_yaw = 0.0f - air_nav_angle / (float)M_PI;
-        //mavlink_log_critical(&_mavlink_log_pub, "air_nav_angle: %8.4f ", (double) air_nav_angle);
-        //pwm_yaw = (pwm_yaw < 0) ? 0.f : pwm_yaw;
-        //pwm_yaw = (pwm_yaw > 1.f) ? 1.f : pwm_yaw;
         act2.control[2] = pwm_yaw;
 
         if (act_pub2 != nullptr) {
@@ -954,7 +952,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
 
         } else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_POSITION) {
 
-//TURNING START//check if turning is needing
+//TURNING LOOP LIGIC START//check if turning is needing
 			if (!do_turning_loop) {
 				const float dist_curr_prev = get_distance_to_next_waypoint(pos_sp_curr.lat, pos_sp_curr.lon, pos_sp_prev.lat, pos_sp_prev.lon);
 				if (dist_curr_prev < 150) {
@@ -1697,7 +1695,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     }
 
     if (throttle_limited_0) {
-        throttle_max = 0.0f;           //may be wrong
+        throttle_max = 0.0f;
         throttle_land = 0.0f;
         landCounter++;
         _land_motor_lim = true;

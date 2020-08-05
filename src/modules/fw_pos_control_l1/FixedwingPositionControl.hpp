@@ -162,7 +162,7 @@ public:
     bool parashute_dropped = false;
     bool start_parachute_release = false;
     int parachute_release_counter = 0;
-    int airframe_mode = 0;        // 0 -fw , 1 - standart_plane
+    int airframe_mode = 0;        // 0 -101 , 1 - diam20
 
     //turning loop
         double loop_pre_exit_lat{0.f};
