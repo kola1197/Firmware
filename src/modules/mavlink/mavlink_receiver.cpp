@@ -472,7 +472,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		const vehicle_command_s &vehicle_command)
 {
 
-	int airframe_mode = 0; // 0 - 101, 1 - diam20
+	int airframe_mode = 1; // 0 - 101, 1 - diam20
 
 	bool target_ok = evaluate_target_ok(cmd_mavlink.command, cmd_mavlink.target_system, cmd_mavlink.target_component);
 
@@ -629,13 +629,13 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 	case MAV_CMD_DO_ENGINE_ACTION:
 		{
 			//test gimbal
-			act2.control[2] = 0.2;
+			// act2.control[2] = 0.2;
 
-			if (act_pub2 != nullptr) {
-				orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
-			} else {
-				act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
-			}
+			// if (act_pub2 != nullptr) {
+			// 	orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
+			// } else {
+			// 	act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
+			// }
 
 			px4_arch_configgpio(GPIO_GPIO4_OUTPUT);
 			if (cmd_mavlink.param1 == 0){
