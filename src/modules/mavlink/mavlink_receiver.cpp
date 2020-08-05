@@ -437,11 +437,6 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 		float minThrottle = 0.15f;
             	param_set(param_find("FW_THR_MAX"), &minThrottle);
 
-		// float result = 0.0f;
-		// param_get(param_find("FW_THR_MAX"), &result);
-		// if ((result - minThrottle) < 0.0001f)
-		// 	_mavlink->send_statustext_critical("set FW_THR_MAX = 0.1f");
-
 		px4_sleep(2);
 		minThrottle = 0.0f;
 		param_set(param_find("FW_THR_MIN"), &minThrottle);
@@ -475,7 +470,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
                     orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd1);
                 }
 
-		//-SET-MODE------------------------------
+		//-SET-MODE-START-----------------------------
 
 		vehicle_command_s vcmd_mode = {};
 		vcmd_mode.timestamp = hrt_absolute_time();
@@ -500,7 +495,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 			orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_mode);
 		}
 
-		//-SET-MODE------------------------------
+		//-SET-MODE-END-----------------------------
 
 		px4_sleep(1);
 
@@ -535,9 +530,9 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 			act1.control[5] = 0.92f;
 			act.timestamp = hrt_absolute_time();
                 	if (act_pub1 != nullptr) {
-                        orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                        	orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
                 	} else {
-                        act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                        	act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
                 	}
 			//result = ioctl(fd, PWM_SERVO_SET(nServ), 1920);
 		}
@@ -547,9 +542,9 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 			act1.control[6] = 0.0;
 			act.timestamp = hrt_absolute_time();
                 	if (act_pub1 != nullptr) {
-                        orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+                        	orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
                 	} else {
-                        act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+                        	act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
                 	}
 			//result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
 		}
@@ -568,12 +563,13 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 			orb_advertise(ORB_ID(input_rc), &input_rc) ;
 			remoteMode = true ;
 			_mavlink->send_statustext_critical("remote_control_mode");
-		} else if (cmd_mavlink.param1 == 1){ //channels override
-			input_rc_s input_rc = {};
-			orb_advertise (ORB_ID(input_rc) , &input_rc);
-			remoteMode = false;
-			_mavlink->send_statustext_critical("channels_override_mode");
-		}
+		} else
+			if (cmd_mavlink.param1 == 1){ //channels override
+				input_rc_s input_rc = {};
+				orb_advertise (ORB_ID(input_rc) , &input_rc);
+				remoteMode = false;
+				_mavlink->send_statustext_critical("channels_override_mode");
+			}
 	    }
 	default:
 		break;

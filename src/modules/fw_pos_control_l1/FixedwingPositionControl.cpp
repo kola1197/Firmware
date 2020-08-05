@@ -1645,7 +1645,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     const float airspeed_land = _parameters.land_airspeed_scale * _parameters.airspeed_min;
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
     float throttle_max = min(_parameters.throttle_max, _parameters.throttle_land_max);
-
+    float throttle_min = min(_parameters.throttle_min, 0.15f);
     if (wp_distance < 80.0f) {
         if (!throttle_limited_15) {
             float landingThrMax = 0.15f;
@@ -1765,7 +1765,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                calculate_target_airspeed(airspeed_land),
                                radians(_parameters.pitch_limit_min) - _parameters.pitchsp_offset_rad,
                                radians(_parameters.pitch_limit_max) - _parameters.pitchsp_offset_rad,
-                               0.0f,
+                               throttle_min,
                                throttle_max,
                                throttle_land,
                                false,
