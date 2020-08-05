@@ -163,6 +163,24 @@ public:
     bool start_parachute_release = false;
     int parachute_release_counter = 0;
     int airframe_mode = 0;        // 0 -fw , 1 - standart_plane
+
+    //turning loop
+        double loop_pre_exit_lat{0.f};
+        double loop_pre_exit_lon{0.f};
+        double loop_exit_lat{0.f};
+        double loop_exit_lon{0.f};
+
+        double loop_pre_enter_lat{0.f};
+        double loop_pre_enter_lon{0.f};
+        double loop_enter_lat{0.f};
+        double loop_enter_lon{0.f};
+        double loop_middle_lat{0.f};
+        double loop_middle_lon{0.f};
+
+        bool do_turning_loop{false};
+        int loop_waypoint_curr{0};
+        float acc_turning_radius{100};
+        float radius{200};
 private:
     orb_advert_t	_mavlink_log_pub{nullptr};
 
@@ -331,6 +349,8 @@ private:
         float land_airspeed_scale;
         float land_throtTC_scale;
 
+        float loiter_radius;
+
         // VTOL
         float airspeed_trans;
         int32_t vtol_type;
@@ -395,6 +415,8 @@ private:
         param_t land_early_config_change;
         param_t land_airspeed_scale;
         param_t land_throtTC_scale;
+
+        param_t loiter_radius;
 
         param_t vtol_type;
     } _parameter_handles {};				///< handles for interesting parameters */
