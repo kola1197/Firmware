@@ -1513,6 +1513,11 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                     float minArspd = 20.f;
 					float trimArspd = 22.f;
 					float maxArspd = 30.f;
+                    if (airframe_mode == 1){
+                        minArspd = 20.f;
+                        trimArspd = 24.f;
+                        maxArspd = 32.f;
+                    }
 					param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
                     param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
 					param_set(param_find("FW_AIRSPD_TRIM"), &trimArspd);
