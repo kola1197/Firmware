@@ -35,6 +35,7 @@
 #include <modules/px4iofirmware/protocol.h>
 #include <modules/px4iofirmware/px4io.h>
 #include <uORB/topics/landing_gear.h>
+#include <drivers/drv_tone_alarm.h>
 #include "FixedwingPositionControl.hpp"
 
 extern "C" __EXPORT int fw_pos_control_l1_main(int argc, char *argv[]);
@@ -1708,6 +1709,12 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
 
+                char tune[] = "MBNT100a8";
+                int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
+                if (fd >= 0) {
+                    px4_write(fd, tune, strlen(tune) + 1);
+                    px4_close(fd);
+                }
                 mavlink_log_critical(&_mavlink_log_pub, "UNHOOK parachute");
                 parashute_dropped = true;
                 // if (airframe_mode == 0){
