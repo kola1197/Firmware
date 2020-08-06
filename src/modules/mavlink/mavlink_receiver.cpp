@@ -40,6 +40,7 @@
  * @author Thomas Gubler <thomas@px4.io>
  */
 #include <uORB/topics/actuator_controls.h>
+#include <uORB/topics/tune_control.h>
 #include <airspeed/airspeed.h>
 #include <commander/px4_custom_mode.h>
 #include <conversion/rotation.h>
@@ -553,12 +554,19 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 			_mavlink->send_statustext_critical("Error! Can not unhook parachute");
 		}
 
-		char tune[] = "MBNT100a8";
-		int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
-		if (fd >= 0) {
-			px4_write(fd, tune, strlen(tune) + 1);
-			px4_close(fd);
+		tune_control_s tc = {};
+		orb_advert_t tune_control_pub = nullptr;
+
+		tc.tune_id = 8;
+		tc.volume = tune_control_s::VOLUME_LEVEL_MAX;
+		tc.tune_override = 0;
+		tc.timestamp = hrt_absolute_time();
+		if (tune_control_pub != nullptr) {
+                        orb_publish(ORB_ID(tune_control), tune_control_pub, &tc);
+		} else {
+			tune_control_pub = orb_advertise(ORB_ID(tune_control), &tc);
 		}
+
 
 		break;
 	    }
