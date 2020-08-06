@@ -854,9 +854,9 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         float air_nav_angle = acosf((air_speed_2d * nav_speed_2d) / (air_speed_2d.length() * nav_speed_2d.length()));
         float pwm_yaw;
         if ((air_speed_2d(0) * nav_speed_2d(1) - air_speed_2d(1) * nav_speed_2d(0)) > 0)
-            pwm_yaw = air_nav_angle / (float)M_PI;
+            pwm_yaw = air_nav_angle / (float)M_PI_4;
         else
-            pwm_yaw = 0.0f - air_nav_angle / (float)M_PI;
+            pwm_yaw = 0.0f - air_nav_angle / (float)M_PI_4;
 
         act2.control[2] = pwm_yaw;
         if (act_pub2 != nullptr) {
@@ -1489,26 +1489,19 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             if (_control_mode.flag_armed) {
                 /* Perform launch detection */
 
+
+                float setThrMax = 1.0f;
+                float setThrMin = 1.0f;
+
+                param_set(param_find("FW_THR_MAX"), &setThrMax);
+                param_set(param_find("FW_THR_MIN"), &setThrMin);
+
                 /* Inform user that launchdetection is running every 4s */
                 if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                     mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
 
-                    if (airframe_mode == 0) {
-                        mavlink_log_critical(&_mavlink_log_pub, "I am FIXED_WING");
-                    }
-                    if (airframe_mode == 1) {
-                        mavlink_log_critical(&_mavlink_log_pub, "I am STANDART PLANE");
-                    }
-                    // test_land_parachute_buffer_release();
-
                     int setAirspeed = 1;
                     param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
-
-                    float setThrMax = 1.0f;
-                    float setThrMin = 0.1f;
-
-                    param_set(param_find("FW_THR_MAX"), &setThrMax);
-                    param_set(param_find("FW_THR_MIN"), &setThrMin);
 
                     float minArspd = 20.f;
 					float trimArspd = 22.f;
@@ -1531,6 +1524,9 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
                 /* update our copy of the launch detection state */
                 _launch_detection_state = _launchDetector.getLaunchDetected();
+            } else {
+                    float setThrMin = 0.12f;
+                    param_set(param_find("FW_THR_MIN"), &setThrMin);
             }
 
         } else {
@@ -1578,6 +1574,8 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
                     manualAirspeedEnabled = true;
                     checkAirspeed = true;
+                    float setThrMin = 0.12f;
+                    param_set(param_find("FW_THR_MIN"), &setThrMin);
                     if (test == 0) {
                         mavlink_log_critical(&_mavlink_log_pub, "Airspeed now active");
                     } else {
@@ -1646,7 +1644,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
     float throttle_max = min(_parameters.throttle_max, _parameters.throttle_land_max);
     float throttle_min = min(_parameters.throttle_min, 0.15f);
-    if (wp_distance < 100.0f) {
+    if (wp_distance < 110.0f) {
         if (!throttle_limited_15) {
             float landingThrMax = 0.15f;
             param_set(param_find("FW_THR_MAX"), &landingThrMax);
@@ -1656,7 +1654,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             throttle_limited_15 = true;
 
         }
-        if (!throttle_limited_0 && (wp_distance < 60.0f || landCounter > 150)) {
+        if (!throttle_limited_0 && (wp_distance < 70.0f || landCounter > 150)) {
             float zeroThrMax = 0.0f;
             param_set(param_find("FW_THR_MIN"), &zeroThrMax);
             param_set(param_find("FW_THR_MAX"), &zeroThrMax);
