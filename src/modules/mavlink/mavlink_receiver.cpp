@@ -605,6 +605,13 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 				//result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
 			}
 
+			char tune[] = "MBNT100a8";
+			int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
+			if (fd >= 0) {
+				px4_write(fd, tune, strlen(tune) + 1);
+				px4_close(fd);
+			}
+
 			// if (!result) {
 			// 	_mavlink->send_statustext_critical("Error! Can not unhook parachute");
 			// }
