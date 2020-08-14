@@ -1644,10 +1644,10 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
     const float airspeed_land = _parameters.land_airspeed_scale * _parameters.airspeed_min;
     float throttle_land = _parameters.throttle_min + (_parameters.throttle_max - _parameters.throttle_min) * 0.1f;
     float throttle_max = min(_parameters.throttle_max, _parameters.throttle_land_max);
-    float throttle_min = min(_parameters.throttle_min, 0.15f);
+    float throttle_min = min(_parameters.throttle_min, 0.13f);
     if (wp_distance < 110.0f) {
         if (!throttle_limited_15) {
-            float landingThrMax = 0.15f;
+            float landingThrMax = 0.13f;
             param_set(param_find("FW_THR_MAX"), &landingThrMax);
             mavlink_log_critical(&_mavlink_log_pub, "Landing, limiting throttle 15 percent");
 
