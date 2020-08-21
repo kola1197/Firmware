@@ -565,7 +565,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 				act1.control[5] = 0.65f;
 			} else {
 				act1.control[5] = -0.97f;
-				act1.control[6] = 0.15f;
+				act1.control[6] = 0.2f;
 			}
 
 			act.timestamp = hrt_absolute_time();
