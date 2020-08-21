@@ -4888,14 +4888,14 @@ protected:
         if (_sub->update(&_stg_status_time, &_stg_status)) {
            	 mavlink_stg_status_t _msg_stg_status;  //make sure mavlink_stg_status_t is the definition of your custom MAVLink message
 			
-			_msg_stg_status.voltage_battery = _stg_status.voltage_battery;
-			_msg_stg_status.voltage_generator = _stg_status.voltage_generator;
-			_msg_stg_status.current_battery = _stg_status.current_battery;
-			_msg_stg_status.current_generator = _stg_status.current_generator;
+			_msg_stg_status.voltage_battery = _stg_status.voltage_battery / 1000;
+			_msg_stg_status.voltage_generator = _stg_status.voltage_generator / 1000;
+			_msg_stg_status.current_battery = _stg_status.current_battery / 1000;
+			_msg_stg_status.current_generator = _stg_status.current_generator / 1000;
 			_msg_stg_status.power_load = _stg_status.power_load;
-			_msg_stg_status.current_charge = _stg_status.current_charge;
+			_msg_stg_status.current_charge =  _stg_status.current_charge / 1000;
 			_msg_stg_status.temperarture_bridge = _stg_status.temperarture_bridge;
-			_msg_stg_status.voltage_drop = _stg_status.voltage_drop;
+			_msg_stg_status.voltage_drop = _stg_status.voltage_drop / 1000;
 			_msg_stg_status.rpm_cranckshaft = _stg_status.rpm_cranckshaft;
 			_msg_stg_status.halls_errors = _stg_status.halls_errors;
 			_msg_stg_status.uptime = _stg_status.uptime;
