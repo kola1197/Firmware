@@ -4918,10 +4918,10 @@ protected:
 			bat_msg.battery_remaining = _stg_status.current_charge;
 			bat_msg.temperature = _stg_status.temperarture_bridge;
 			bat_msg.charge_state = _stg_status.current_generator;
-			bat_msg.voltages[0] = _stg_status.voltage_generator;
-			bat_msg.voltages[1] = _stg_status.voltage_battery;
-			bat_msg.voltages[2] = _stg_status.power_load;
-			bat_msg.voltages[3] = _stg_status.voltage_drop;
+
+			for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
+				bat_msg.voltages[i] = _stg_status.voltage_generator;
+			}
 			
 			
 

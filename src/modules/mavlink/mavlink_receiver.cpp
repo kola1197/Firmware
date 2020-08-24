@@ -553,6 +553,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		//-SET-MODE------------------------------
 
 		px4_sleep(1);
+		mavlink_log_critical(&_mavlink_log_pub, "Parachute released");
 
 		if (airframe_mode == 0) {
 			act1.control[5] = 0.65f;
@@ -575,6 +576,8 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
 		else
 			act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+
+		mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
 
 		char tune[] = "MBNT100a8";
 		int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
@@ -612,9 +615,12 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		px4_arch_configgpio(GPIO_GPIO4_OUTPUT);
 		if (cmd_mavlink.param1 == 0){
 			px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, false);
+			mavlink_log_critical(&_mavlink_log_pub, "Engine OFF");
 		}else{
 			px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, true);
+			mavlink_log_critical(&_mavlink_log_pub, "Engine ON");
 		}
+
 	} else if (cmd_mavlink.command == MAV_CMD_STG_ACTION){
 		//_mavlink->send_statustext_critical("send STG_ACTION");
 		vehicle_command_s vcmd_stg = vehicle_command;
