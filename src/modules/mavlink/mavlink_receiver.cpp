@@ -579,12 +579,17 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 
 		mavlink_log_critical(&_mavlink_log_pub, "Parachute unhooked");
 
-		char tune[] = "MBNT100a8";
-		int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
-		if (fd >= 0) {
-			px4_write(fd, tune, strlen(tune) + 1);
-			px4_close(fd);
-		}
+		
+		tune_control_s tune_control = {};
+		orb_advert_t tune_control_pub = nullptr;     
+		tune_control_pub = orb_advertise(ORB_ID(tune_control), &tune_control);
+
+		tune_control.tune_id = 8;
+		tune_control.volume = tune_control_s::VOLUME_LEVEL_MAX;
+		tune_control.tune_override = 1;
+		tune_control.timestamp = hrt_absolute_time();
+		orb_publish(ORB_ID(tune_control), tune_control_pub, &tune_control);
+
 	} else if (cmd_mavlink.command == MAV_CMD_SWITCH_REMOTE_OVERRIDE_MODE){
 		if(cmd_mavlink.param1 == 0 ){ //remote controller
 			int ATCcommand = 5 ;
