@@ -918,13 +918,13 @@ bool prearm_check(orb_advert_t *mavlink_log_pub, const vehicle_status_flags_s &s
 
 
 	// USB not connected
-	if (!status_flags.circuit_breaker_engaged_usb_check && status_flags.usb_connected) {
-		if (reportFailures) {
-			mavlink_log_critical(mavlink_log_pub, "ARMING DENIED: Flying with USB is not safe");
-		}
+	// if (!status_flags.circuit_breaker_engaged_usb_check && status_flags.usb_connected) {
+	// 	if (reportFailures) {
+	// 		mavlink_log_critical(mavlink_log_pub, "ARMING DENIED: Flying with USB is not safe");
+	// 	}
 
-		prearm_ok = false;
-	}
+	// 	prearm_ok = false;
+	// }
 
 	/*// battery and system power status
 	if (!status_flags.circuit_breaker_engaged_power_check) {
