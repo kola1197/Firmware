@@ -1723,11 +1723,11 @@ MavlinkReceiver::handle_message_battery_status(mavlink_message_t *msg)
 		// Set the battery warning based on remaining charge.
 		//  Note: Smallest values must come first in evaluation.
 		if (battery_status.remaining < bat_emergen_thr) {
-			battery_status.warning = battery_status_s::BATTERY_WARNING_EMERGENCY;
-
+			//battery_status.warning = battery_status_s::BATTERY_WARNING_EMERGENCY;
+			battery_status.warning = battery_status_s::BATTERY_WARNING_LOW;
 		} else if (battery_status.remaining < bat_crit_thr) {
-			battery_status.warning = battery_status_s::BATTERY_WARNING_CRITICAL;
-
+			//battery_status.warning = battery_status_s::BATTERY_WARNING_CRITICAL;
+			battery_status.warning = battery_status_s::BATTERY_WARNING_LOW;
 		} else if (battery_status.remaining < bat_low_thr) {
 			battery_status.warning = battery_status_s::BATTERY_WARNING_LOW;
 		}

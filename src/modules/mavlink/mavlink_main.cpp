@@ -1670,8 +1670,8 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
 		configure_stream_local("UTM_GLOBAL_POSITION", 1.0f);
 		configure_stream_local("VFR_HUD", 4.0f);
 		configure_stream_local("WIND_COV", 1.0f);
-		configure_stream_local("STG_STATUS", 5.0f);
-		configure_stream_local("ADC_REPORT", 5.0f);
+		configure_stream_local("STG_STATUS", 2.0f);
+		configure_stream_local("ADC_REPORT", 2.0f);
 		break;
 
 	case MAVLINK_MODE_ONBOARD:
@@ -2164,9 +2164,9 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("COMMAND_LONG");
 
 		/* STG_STATUS stream */
-		configure_stream("STG_STATUS", 5.0f);
+		configure_stream("STG_STATUS", 2.0f);
 
-		configure_stream("ADC_REPORT", 5.0f);
+		configure_stream("ADC_REPORT", 2.0f);
 
 	}
 

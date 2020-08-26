@@ -32,6 +32,7 @@
  ****************************************************************************/
 
 #include <uORB/topics/actuator_controls.h>
+#include <uORB/topics/tune_control.h>
 #include <modules/px4iofirmware/protocol.h>
 #include <modules/px4iofirmware/px4io.h>
 #include <drivers/drv_tone_alarm.h>
@@ -1709,12 +1710,22 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                 mavlink_log_critical(&_mavlink_log_pub, "UNHOOK parachute");
                 parashute_dropped = true;
 
-                char tune[] = "MBNT100a8";
+                tune_control_s tune_control = {};
+                orb_advert_t tune_control_pub = nullptr;     
+                tune_control_pub = orb_advertise(ORB_ID(tune_control), &tune_control);
+	
+                tune_control.tune_id = 8;
+                tune_control.volume = tune_control_s::VOLUME_LEVEL_MAX;
+                tune_control.tune_override = 1;
+                tune_control.timestamp = hrt_absolute_time();
+                orb_publish(ORB_ID(tune_control), tune_control_pub, &tune_control);
+
+                /*char tune[] = "MBNT100a8";
                 int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
                 if (fd >= 0) {
                     px4_write(fd, tune, strlen(tune) + 1);
                     px4_close(fd);
-                }
+                }*/
                 // if (airframe_mode == 0){
                 // act1.control[5] = 0.92f;
                 // act.timestamp = hrt_absolute_time();
