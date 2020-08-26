@@ -1759,7 +1759,7 @@ Commander::run()
 			orb_copy(ORB_ID(cpuload), cpuload_sub, &cpuload);
 		}
 
-		battery_status_check();
+		//battery_status_check();
 
 		/* update subsystem info which arrives from outside of commander*/
 		do {
@@ -4026,7 +4026,7 @@ void Commander::battery_status_check()
 				status_flags.condition_battery_healthy = false;
 			}
 
-			// execute battery failsafe if the state has gotten worse
+			/*// execute battery failsafe if the state has gotten worse
 			if (armed.armed) {
 				if (battery.warning > _battery_warning) {
 					battery_failsafe(&mavlink_log_pub, status, status_flags, &internal_state, battery.warning,
@@ -4050,7 +4050,7 @@ void Commander::battery_status_check()
 						while (1) { px4_usleep(1); }
 					}
 				}
-			}
+			}*/
 
 			// save last value
 			_battery_warning = battery.warning;

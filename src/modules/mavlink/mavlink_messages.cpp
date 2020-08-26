@@ -544,11 +544,11 @@ public:
 private:
 	MavlinkOrbSubscription *_status_sub;
 	MavlinkOrbSubscription *_cpuload_sub;
-	MavlinkOrbSubscription *_battery_status_sub;
+	//MavlinkOrbSubscription *_battery_status_sub;
 
 	uint64_t _status_timestamp{0};
 	uint64_t _cpuload_timestamp{0};
-	uint64_t _battery_status_timestamp{0};
+	//uint64_t _battery_status_timestamp{0};
 
 	/* do not allow top copying this class */
 	MavlinkStreamSysStatus(MavlinkStreamSysStatus &) = delete;
@@ -557,29 +557,29 @@ private:
 protected:
 	explicit MavlinkStreamSysStatus(Mavlink *mavlink) : MavlinkStream(mavlink),
 		_status_sub(_mavlink->add_orb_subscription(ORB_ID(vehicle_status))),
-		_cpuload_sub(_mavlink->add_orb_subscription(ORB_ID(cpuload))),
-		_battery_status_sub(_mavlink->add_orb_subscription(ORB_ID(battery_status)))
+		_cpuload_sub(_mavlink->add_orb_subscription(ORB_ID(cpuload)))
+		//_battery_status_sub(_mavlink->add_orb_subscription(ORB_ID(battery_status)))
 	{}
 
 	bool send(const hrt_abstime t)
 	{
 		vehicle_status_s status = {};
 		cpuload_s cpuload = {};
-		battery_status_s battery_status = {};
+		//battery_status_s battery_status = {};
 
 		const bool updated_status = _status_sub->update(&_status_timestamp, &status);
 		const bool updated_cpuload = _cpuload_sub->update(&_cpuload_timestamp, &cpuload);
-		const bool updated_battery = _battery_status_sub->update(&_battery_status_timestamp, &battery_status);
+		//const bool updated_battery = _battery_status_sub->update(&_battery_status_timestamp, &battery_status);
 
-		if (updated_status || updated_battery || updated_cpuload) {
+		if (updated_status /*|| updated_battery*/ || updated_cpuload) {
 
 			if (!updated_status) {
 				_status_sub->update(&status);
 			}
 
-			if (!updated_battery) {
-				_battery_status_sub->update(&battery_status);
-			}
+			// if (!updated_battery) {
+			// 	_battery_status_sub->update(&battery_status);
+			// }
 
 			if (!updated_cpuload) {
 				_cpuload_sub->update(&cpuload);
@@ -591,9 +591,9 @@ protected:
 			msg.onboard_control_sensors_enabled = status.onboard_control_sensors_enabled;
 			msg.onboard_control_sensors_health = status.onboard_control_sensors_health;
 			msg.load = cpuload.load * 1000.0f;
-			msg.voltage_battery = (battery_status.connected) ? battery_status.voltage_filtered_v * 1000.0f : UINT16_MAX;
-			msg.current_battery = (battery_status.connected) ? battery_status.current_filtered_a * 100.0f : -1;
-			msg.battery_remaining = (battery_status.connected) ? ceilf(battery_status.remaining * 100.0f) : -1;
+			msg.voltage_battery = /*(battery_status.connected) ? battery_status.voltage_filtered_v * 1000.0f :*/ UINT16_MAX;
+			msg.current_battery = /*(battery_status.connected) ? battery_status.current_filtered_a * 100.0f :*/ -1;
+			msg.battery_remaining = /*(battery_status.connected) ? ceilf(battery_status.remaining * 100.0f) :*/ -1;
 			// TODO: fill in something useful in the fields below
 			msg.drop_rate_comm = 0;
 			msg.errors_comm = 0;
@@ -4905,27 +4905,27 @@ protected:
 
 			mavlink_msg_stg_status_send_struct(_mavlink->get_channel(), &_msg_stg_status);
         
-			/* battery status message with higher resolution */
-			mavlink_battery_status_t bat_msg = {};
+			// /* battery status message with higher resolution */
+			// mavlink_battery_status_t bat_msg = {};
 
-			bat_msg.id = 0;
-			bat_msg.type = MAV_BATTERY_TYPE_LIPO;
-			bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
-			bat_msg.current_consumed = _stg_status.rpm_cranckshaft;
-			bat_msg.current_battery = _stg_status.current_battery;
-			bat_msg.energy_consumed = _stg_status.rpm_cranckshaft;
-			bat_msg.time_remaining = _stg_status.uptime;
-			bat_msg.battery_remaining = _stg_status.current_charge;
-			bat_msg.temperature = _stg_status.temperarture_bridge;
-			bat_msg.charge_state = _stg_status.current_generator;
+			// bat_msg.id = 0;
+			// bat_msg.type = MAV_BATTERY_TYPE_LIPO;
+			// bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
+			// bat_msg.current_consumed = _stg_status.rpm_cranckshaft;
+			// bat_msg.current_battery = _stg_status.current_battery;
+			// bat_msg.energy_consumed = _stg_status.rpm_cranckshaft;
+			// bat_msg.time_remaining = _stg_status.uptime;
+			// bat_msg.battery_remaining = _stg_status.current_charge;
+			// bat_msg.temperature = _stg_status.temperarture_bridge;
+			// bat_msg.charge_state = _stg_status.current_generator;
 
-			for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
-				bat_msg.voltages[i] = _stg_status.voltage_generator;
-			}
+			// for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
+			// 	bat_msg.voltages[i] = _stg_status.voltage_generator;
+			// }
 			
 			
 
-			mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
+			// mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
 
 		
 		}

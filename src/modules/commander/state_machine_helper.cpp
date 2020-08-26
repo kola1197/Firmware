@@ -926,7 +926,7 @@ bool prearm_check(orb_advert_t *mavlink_log_pub, const vehicle_status_flags_s &s
 		prearm_ok = false;
 	}
 
-	// battery and system power status
+	/*// battery and system power status
 	if (!status_flags.circuit_breaker_engaged_power_check) {
 
 		// Fail transition if power is not good
@@ -946,7 +946,7 @@ bool prearm_check(orb_advert_t *mavlink_log_pub, const vehicle_status_flags_s &s
 
 			prearm_ok = false;
 		}
-	}
+	}*/
 
 	// Arm Requirements: mission
 	if (arm_requirements & ARM_REQ_MISSION_BIT) {
