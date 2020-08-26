@@ -4888,14 +4888,14 @@ protected:
         if (_sub->update(&_stg_status_time, &_stg_status)) {
            	 mavlink_stg_status_t _msg_stg_status;  //make sure mavlink_stg_status_t is the definition of your custom MAVLink message
 			
-			_msg_stg_status.voltage_battery = _stg_status.voltage_battery / 100;
-			_msg_stg_status.voltage_generator = _stg_status.voltage_generator / 100;
-			_msg_stg_status.current_battery = _stg_status.current_battery / 100;
-			_msg_stg_status.current_generator = _stg_status.current_generator / 100;
+			_msg_stg_status.voltage_battery = _stg_status.voltage_battery;
+			_msg_stg_status.voltage_generator = _stg_status.voltage_generator;
+			_msg_stg_status.current_battery = _stg_status.current_battery;
+			_msg_stg_status.current_generator = _stg_status.current_generator;
 			_msg_stg_status.power_load = _stg_status.power_load;
-			_msg_stg_status.current_charge =  _stg_status.current_charge / 100;
+			_msg_stg_status.current_charge =  _stg_status.current_charge;
 			_msg_stg_status.temperarture_bridge = _stg_status.temperarture_bridge;
-			_msg_stg_status.voltage_drop = _stg_status.voltage_drop / 100;
+			_msg_stg_status.voltage_drop = _stg_status.voltage_drop;
 			_msg_stg_status.rpm_cranckshaft = _stg_status.rpm_cranckshaft;
 			_msg_stg_status.halls_errors = _stg_status.halls_errors;
 			_msg_stg_status.uptime = _stg_status.uptime;
@@ -4904,28 +4904,28 @@ protected:
 			_msg_stg_status.stg_errors_bitmask = _stg_status.stg_errors_bitmask;
 
 			mavlink_msg_stg_status_send_struct(_mavlink->get_channel(), &_msg_stg_status);
-        // /*
-		// 	/* battery status message with higher resolution */
-		// 	mavlink_battery_status_t bat_msg = {};
+        
+			/* battery status message with higher resolution */
+			mavlink_battery_status_t bat_msg = {};
 
-		// 	bat_msg.id = 0;
-		// 	bat_msg.type = MAV_BATTERY_TYPE_LIPO;
-		// 	bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
-		// 	bat_msg.current_consumed = _stg_status.rpm_cranckshaft;
-		// 	bat_msg.current_battery = _stg_status.current_battery;
-		// 	bat_msg.energy_consumed = _stg_status.rpm_cranckshaft;
-		// 	bat_msg.time_remaining = _stg_status.uptime;
-		// 	bat_msg.battery_remaining = _stg_status.current_charge;
-		// 	bat_msg.temperature = _stg_status.temperarture_bridge;
-		// 	bat_msg.charge_state = _stg_status.current_generator;
+			bat_msg.id = 0;
+			bat_msg.type = MAV_BATTERY_TYPE_LIPO;
+			bat_msg.battery_function = MAV_BATTERY_FUNCTION_ALL;
+			bat_msg.current_consumed = _stg_status.rpm_cranckshaft;
+			bat_msg.current_battery = _stg_status.current_battery;
+			bat_msg.energy_consumed = _stg_status.rpm_cranckshaft;
+			bat_msg.time_remaining = _stg_status.uptime;
+			bat_msg.battery_remaining = _stg_status.current_charge;
+			bat_msg.temperature = _stg_status.temperarture_bridge;
+			bat_msg.charge_state = _stg_status.current_generator;
 
-		// 	for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
-		// 		bat_msg.voltages[i] = _stg_status.voltage_generator;
-		// 	}
+			for (unsigned int i = 0; i < (sizeof(bat_msg.voltages) / sizeof(bat_msg.voltages[0])); i++) {
+				bat_msg.voltages[i] = _stg_status.voltage_generator;
+			}
 			
 			
 
-		// 	mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);*/
+			mavlink_msg_battery_status_send_struct(_mavlink->get_channel(), &bat_msg);
 
 		
 		}

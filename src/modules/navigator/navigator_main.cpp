@@ -473,8 +473,9 @@ Navigator::run()
 					float minArspd = trimArspd - 1;
 					float maxArspd = trimArspd + 1;
 					param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
-                    param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
 					param_set(param_find("FW_AIRSPD_TRIM"), &trimArspd);
+                    param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
+					
 
 				} else {
 					set_cruising_speed();
