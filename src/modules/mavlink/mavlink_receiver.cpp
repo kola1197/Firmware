@@ -608,14 +608,6 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			_mavlink->send_statustext_critical("channels_override_mode");
 		}
 	} else if (cmd_mavlink.command == MAV_CMD_DO_ENGINE_ACTION){
-		//test gimbal
-		// act2.control[2] = 0.2;
-
-		// if (act_pub2 != nullptr) {
-		// 	orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
-		// } else {
-		// 	act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
-		// }
 
 		px4_arch_configgpio(GPIO_GPIO4_OUTPUT);
 		if (cmd_mavlink.param1 == 0){
