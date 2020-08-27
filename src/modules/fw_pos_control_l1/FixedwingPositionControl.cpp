@@ -1709,7 +1709,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
 
-                if (!parachute_dropped) {
+                if (!parashute_dropped) {
                     tune_control_s tune_control = {};
                     orb_advert_t tune_control_pub = nullptr;
                     tune_control_pub = orb_advertise(ORB_ID(tune_control), &tune_control);
