@@ -858,12 +858,12 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
             pwm_yaw = air_nav_angle / (float)M_PI_4;
         else
             pwm_yaw = 0.0f - air_nav_angle / (float)M_PI_4;
-        act2.control[2] = pwm_yaw;
+        act1.control[4] = pwm_yaw;
 
-        if (act_pub2 != nullptr) {
-            orb_publish(ORB_ID(actuator_controls_2), act_pub2, &act2);
+        if (act_pub1 != nullptr) {
+            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
         } else {
-            act_pub2 = orb_advertise(ORB_ID(actuator_controls_2), &act2);
+            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
         }
     }
 
@@ -954,90 +954,90 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         } else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_POSITION) {
 
 //TURNING LOOP LIGIC START//check if turning is needing
-			if (!do_turning_loop) {
-				const float dist_curr_prev = get_distance_to_next_waypoint(pos_sp_curr.lat, pos_sp_curr.lon, pos_sp_prev.lat, pos_sp_prev.lon);
-				if (dist_curr_prev < 150) {
-					mavlink_log_critical(&_mavlink_log_pub, "Start turning loop");
-                    param_get(_parameter_handles.loiter_radius, &radius);
-					do_turning_loop = true;
+			// if (!do_turning_loop) {
+			// 	const float dist_curr_prev = get_distance_to_next_waypoint(pos_sp_curr.lat, pos_sp_curr.lon, pos_sp_prev.lat, pos_sp_prev.lon);
+			// 	if (dist_curr_prev < 150) {
+			// 		mavlink_log_critical(&_mavlink_log_pub, "Start turning loop");
+            //         param_get(_parameter_handles.loiter_radius, &radius);
+			// 		do_turning_loop = true;
 
-					double curr_next_lat = 0;
-					double curr_next_lon = 0;
+			// 		double curr_next_lat = 0;
+			// 		double curr_next_lon = 0;
 
-					double curr_prev_lat = 0;
-					double curr_prev_lon = 0;
+			// 		double curr_prev_lat = 0;
+			// 		double curr_prev_lon = 0;
 
-					//pre_enter wp
-					loop_pre_enter_lat = pos_sp_prev.lat;
-					loop_pre_enter_lon = pos_sp_prev.lon;
-					acc_turning_radius = 10;
+			// 		//pre_enter wp
+			// 		loop_pre_enter_lat = pos_sp_prev.lat;
+			// 		loop_pre_enter_lon = pos_sp_prev.lon;
+			// 		acc_turning_radius = 10;
 
-					//enter wp
-					create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
-								pos_sp_next.lat, pos_sp_next.lon, radius, &curr_next_lat, &curr_next_lon);
-					create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
-								pos_sp_prev.lat, pos_sp_prev.lon, radius*0.6f, &curr_prev_lat, &curr_prev_lon);
-					create_waypoint_from_line_and_dist(curr_prev_lat, curr_prev_lon,
-								curr_next_lat, curr_next_lon, -radius*1.1f, &loop_enter_lat, &loop_enter_lon);
+			// 		//enter wp
+			// 		create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
+			// 					pos_sp_next.lat, pos_sp_next.lon, radius, &curr_next_lat, &curr_next_lon);
+			// 		create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
+			// 					pos_sp_prev.lat, pos_sp_prev.lon, radius*0.6f, &curr_prev_lat, &curr_prev_lon);
+			// 		create_waypoint_from_line_and_dist(curr_prev_lat, curr_prev_lon,
+			// 					curr_next_lat, curr_next_lon, -radius*1.1f, &loop_enter_lat, &loop_enter_lon);
 
-					//middle wp
-					create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
-								pos_sp_next.lat, pos_sp_next.lon, -radius, &loop_middle_lat, &loop_middle_lon);
+			// 		//middle wp
+			// 		create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
+			// 					pos_sp_next.lat, pos_sp_next.lon, -radius, &loop_middle_lat, &loop_middle_lon);
 
-					//pre_exit wp
-					create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
-								pos_sp_next.lat, pos_sp_next.lon, -radius*0.2f, &loop_pre_exit_lat, &loop_pre_exit_lon);
+			// 		//pre_exit wp
+			// 		create_waypoint_from_line_and_dist(pos_sp_curr.lat, pos_sp_curr.lon,
+			// 					pos_sp_next.lat, pos_sp_next.lon, -radius*0.2f, &loop_pre_exit_lat, &loop_pre_exit_lon);
 
-					//exit wp
-					loop_exit_lat = pos_sp_curr.lat;
-					loop_exit_lon = pos_sp_curr.lon;
+			// 		//exit wp
+			// 		loop_exit_lat = pos_sp_curr.lat;
+			// 		loop_exit_lon = pos_sp_curr.lon;
 
-				}
-			}
+			// 	}
+			// }
 
-			if (do_turning_loop){
-				switch(loop_waypoint_curr){
-					case 0:
-						curr_wp = Vector2f((float)loop_pre_enter_lat, (float)loop_pre_enter_lon);
-						break;
-					case 1:
-						curr_wp = Vector2f((float)loop_enter_lat, (float)loop_enter_lon);
-						break;
-					case 2:
-						//moving towards middle point
-						prev_wp = Vector2f((float)loop_enter_lat, (float)loop_enter_lon);
-						curr_wp = Vector2f((float)loop_middle_lat, (float)loop_middle_lon);
-						break;
+			// if (do_turning_loop){
+			// 	switch(loop_waypoint_curr){
+			// 		case 0:
+			// 			curr_wp = Vector2f((float)loop_pre_enter_lat, (float)loop_pre_enter_lon);
+			// 			break;
+			// 		case 1:
+			// 			curr_wp = Vector2f((float)loop_enter_lat, (float)loop_enter_lon);
+			// 			break;
+			// 		case 2:
+			// 			//moving towards middle point
+			// 			prev_wp = Vector2f((float)loop_enter_lat, (float)loop_enter_lon);
+			// 			curr_wp = Vector2f((float)loop_middle_lat, (float)loop_middle_lon);
+			// 			break;
 
-					case 3:
-						acc_turning_radius = radius * 0.3f;
-						prev_wp = Vector2f((float)loop_middle_lat, (float)loop_middle_lon);
-						curr_wp = Vector2f((float)loop_pre_exit_lat, (float)loop_pre_exit_lon);
-						break;
-					case 4:
-						prev_wp = Vector2f((float)loop_pre_exit_lat, (float)loop_pre_exit_lon);
-						curr_wp = Vector2f((float)loop_exit_lat, (float)loop_exit_lon);
-						break;
-					default:
-						break;
-				}
+			// 		case 3:
+			// 			acc_turning_radius = radius * 0.3f;
+			// 			prev_wp = Vector2f((float)loop_middle_lat, (float)loop_middle_lon);
+			// 			curr_wp = Vector2f((float)loop_pre_exit_lat, (float)loop_pre_exit_lon);
+			// 			break;
+			// 		case 4:
+			// 			prev_wp = Vector2f((float)loop_pre_exit_lat, (float)loop_pre_exit_lon);
+			// 			curr_wp = Vector2f((float)loop_exit_lat, (float)loop_exit_lon);
+			// 			break;
+			// 		default:
+			// 			break;
+			// 	}
 
 
-				const float dist_xy = get_distance_to_next_waypoint(curr_pos(0), curr_pos(1), curr_wp(0), curr_wp(1));
-				//mavlink_log_critical(&_mavlink_log_pub, "distance = %f", dist_xy);
-				if (dist_xy < acc_turning_radius) {
-					loop_waypoint_curr ++;
-					acc_turning_radius = radius * 0.6f;
-					mavlink_log_critical(&_mavlink_log_pub, "Turning wp %d", loop_waypoint_curr);
-					if (loop_waypoint_curr >= 5){
-						mavlink_log_critical(&_mavlink_log_pub, "Exit turning loop");
-						curr_wp = Vector2f((float)pos_sp_curr.lat, (float)pos_sp_curr.lon);
-						prev_wp = Vector2f((float)loop_pre_exit_lat, (float)loop_exit_lon);
-						loop_waypoint_curr = 0;
-						do_turning_loop = false;
-					}
-				}
-			}
+			// 	const float dist_xy = get_distance_to_next_waypoint(curr_pos(0), curr_pos(1), curr_wp(0), curr_wp(1));
+			// 	//mavlink_log_critical(&_mavlink_log_pub, "distance = %f", dist_xy);
+			// 	if (dist_xy < acc_turning_radius) {
+			// 		loop_waypoint_curr ++;
+			// 		acc_turning_radius = radius * 0.6f;
+			// 		mavlink_log_critical(&_mavlink_log_pub, "Turning wp %d", loop_waypoint_curr);
+			// 		if (loop_waypoint_curr >= 5){
+			// 			mavlink_log_critical(&_mavlink_log_pub, "Exit turning loop");
+			// 			curr_wp = Vector2f((float)pos_sp_curr.lat, (float)pos_sp_curr.lon);
+			// 			prev_wp = Vector2f((float)loop_pre_exit_lat, (float)loop_exit_lon);
+			// 			loop_waypoint_curr = 0;
+			// 			do_turning_loop = false;
+			// 		}
+			// 	}
+			// }
 //TURNING END
             /* waypoint is a plain navigation waypoint */
             _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, nav_speed_2d);
@@ -1513,7 +1513,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
                     float minArspd = 20.f;
 					float trimArspd = 22.f;
-					float maxArspd = 30.f;
+					float maxArspd = 26.f;
                     if (airframe_mode == 1){
                         minArspd = 20.f;
                         trimArspd = 24.f;
@@ -1709,13 +1709,20 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         if (parashute_set && !parashute_dropped && _vehicle_land_detected.landed) {
             if (wp_distance < 200) {
 
-                char tune[] = "MBNT100a8";
-                int fd = px4_open(TONE_ALARM0_DEVICE_PATH, PX4_F_WRONLY);
-                if (fd >= 0) {
-                    px4_write(fd, tune, strlen(tune) + 1);
-                    px4_close(fd);
+                if (!parachute_dropped) {
+                    tune_control_s tune_control = {};
+                    orb_advert_t tune_control_pub = nullptr;
+                    tune_control_pub = orb_advertise(ORB_ID(tune_control), &tune_control);
+
+                    tune_control.tune_id = 8;
+                    tune_control.volume = tune_control_s::VOLUME_LEVEL_MAX;
+                    tune_control.tune_override = 1;
+                    tune_control.timestamp = hrt_absolute_time();
+                    orb_publish(ORB_ID(tune_control), tune_control_pub, &tune_control);
+
+                    mavlink_log_critical(&_mavlink_log_pub, "UNHOOK parachute");
                 }
-                mavlink_log_critical(&_mavlink_log_pub, "UNHOOK parachute");
+
                 parashute_dropped = true;
                 // if (airframe_mode == 0){
                 // act1.control[5] = 0.92f;
