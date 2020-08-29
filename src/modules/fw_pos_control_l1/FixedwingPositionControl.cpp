@@ -856,9 +856,9 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         float air_nav_angle = acosf((air_speed_2d * nav_speed_2d) / (air_speed_2d.length() * nav_speed_2d.length()));
         float pwm_yaw;
         if ((air_speed_2d(0) * nav_speed_2d(1) - air_speed_2d(1) * nav_speed_2d(0)) > 0)
-            pwm_yaw = air_nav_angle / (float)M_PI_4;
+            pwm_yaw = air_nav_angle / (float)M_PI_4 * 2;
         else
-            pwm_yaw = 0.0f - air_nav_angle / (float)M_PI_4;
+            pwm_yaw = 0.0f - air_nav_angle / (float)M_PI_4 * 2;
 
         act1.control[4] = pwm_yaw;
         act1.timestamp = hrt_absolute_time();
