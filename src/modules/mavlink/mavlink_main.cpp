@@ -189,50 +189,8 @@ Mavlink::Mavlink() :
 	/* performance counters */
 	_loop_perf(perf_alloc(PC_ELAPSED, "mavlink_el")),
 	_loop_interval_perf(perf_alloc(PC_INTERVAL, "mavlink_int"))
+
 {
-	_instance_id = Mavlink::instance_count();
-
-	/* set channel according to instance id */
-	switch (_instance_id) {
-	case 0:
-		_channel = MAVLINK_COMM_0;
-		break;
-
-	case 1:
-		_channel = MAVLINK_COMM_1;
-		break;
-
-	case 2:
-		_channel = MAVLINK_COMM_2;
-		break;
-
-	case 3:
-		_channel = MAVLINK_COMM_3;
-		break;
-#ifdef MAVLINK_COMM_4
-
-	case 4:
-		_channel = MAVLINK_COMM_4;
-		break;
-#endif
-#ifdef MAVLINK_COMM_5
-
-	case 5:
-		_channel = MAVLINK_COMM_5;
-		break;
-#endif
-#ifdef MAVLINK_COMM_6
-
-	case 6:
-		_channel = MAVLINK_COMM_6;
-		break;
-#endif
-
-	default:
-		PX4_WARN("instance ID is out of range");
-		px4_task_exit(1);
-		break;
-	}
 
 	// initialise parameter cache
 	mavlink_update_parameters();
@@ -274,6 +232,57 @@ Mavlink::~Mavlink()
 				break;
 			}
 		} while (_task_running);
+	}
+}
+
+void
+Mavlink::set_instance_id()
+{
+	_instance_id = Mavlink::instance_count();
+}
+
+void Mavlink::set_channel(){
+
+	/* set channel according to instance id */
+	switch (_instance_id) {
+	case 0:
+		_channel = MAVLINK_COMM_0;
+		break;
+
+	case 1:
+		_channel = MAVLINK_COMM_1;
+		break;
+
+	case 2:
+		_channel = MAVLINK_COMM_2;
+		break;
+
+	case 3:
+		_channel = MAVLINK_COMM_3;
+		break;
+#ifdef MAVLINK_COMM_4
+
+	case 4:
+		_channel = MAVLINK_COMM_4;
+		break;
+#endif
+#ifdef MAVLINK_COMM_5
+
+	case 5:
+		_channel = MAVLINK_COMM_5;
+		break;
+#endif
+#ifdef MAVLINK_COMM_6
+
+	case 6:
+		_channel = MAVLINK_COMM_6;
+		break;
+#endif
+
+	default:
+		PX4_WARN("instance ID is out of range");
+		px4_task_exit(1);
+		break;
 	}
 }
 
@@ -512,7 +521,7 @@ Mavlink::get_uart_fd(unsigned index)
 }
 
 int
-Mavlink::mavlink_open_uart(int baud, const char *uart_name, bool force_flow_control)
+Mavlink::mavlink_open_uart(const int baud, const char *uart_name, const bool force_flow_control)
 {
 #ifndef B460800
 #define B460800 460800
@@ -637,7 +646,9 @@ Mavlink::mavlink_open_uart(int baud, const char *uart_name, bool force_flow_cont
 				}
 			}
 
-			px4_usleep(100000);
+			int errcode = errno;
+			/* ENOTCONN means that the USB device is not yet connected */
+			px4_usleep(errcode == ENOTCONN ? 1000000 :  100000);
 			_uart_fd = ::open(uart_name, O_RDWR | O_NOCTTY);
 		}
 
@@ -2186,6 +2197,10 @@ Mavlink::task_main(int argc, char *argv[])
 	if (_main_loop_delay > MAVLINK_MAX_INTERVAL) {
 		_main_loop_delay = MAVLINK_MAX_INTERVAL;
 	}
+
+	set_instance_id();
+
+	set_channel();
 
 	/* now the instance is fully initialized and we can bump the instance count */
 	LL_APPEND(_mavlink_instances, this);
