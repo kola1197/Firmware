@@ -525,8 +525,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd1);
 				
 
-		//-SET-MODE------------------------------
-
+		//-SET-MODE-START-----------------------------
 		vehicle_command_s vcmd_mode = {};
 		vcmd_mode.timestamp = hrt_absolute_time();
 
@@ -549,20 +548,15 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		} else {
 			orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_mode);
 		}
-
-		//-SET-MODE------------------------------
+		//-SET-MODE-END-----------------------------
 
 		px4_sleep(1);
 		mavlink_log_critical(&_mavlink_log_pub, "Parachute released");
 
-		if (airframe_mode == 0) {
-			act1.control[5] = 0.65f;
-		} else {
-			act1.control[5] = -0.97f;
-			act1.control[6] = 0.2f;
-		}
+		act1.control[5] = -0.97f;
+		act1.control[6] = 0.2f;
 
-		act.timestamp = hrt_absolute_time();
+		act1.timestamp = hrt_absolute_time();
 		if (act_pub1 != nullptr)
 			orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
 		else 

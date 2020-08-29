@@ -1682,16 +1682,13 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             mavlink_log_critical(&_mavlink_log_pub, "Release parachute");
         parachute_release_counter++;
 
-        if (airframe_mode == 0) {
-            act1.control[5] = 0.65f;
-        }
-        if (airframe_mode == 1) {
-            act1.control[5] = -0.97f; //parachute drop
-            act1.control[6] = 0.2f; //buffer drop
-        }
+        act1.control[5] = -0.97f; //parachute drop
+        act1.control[6] = 0.2f; //buffer drop
+    
 
         parashute_set = true;
-        act.timestamp = hrt_absolute_time();
+        
+        act1.timestamp = hrt_absolute_time();
         if (act_pub1 != nullptr) {
             orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
         } else {
