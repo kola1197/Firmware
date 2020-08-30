@@ -112,10 +112,10 @@ private:
 		(ParamFloat<px4::params::RWTO_AIRSPD_SCL>) _param_rwto_airspd_scl,
 		(ParamFloat<px4::params::FW_AIRSPD_MIN>) _param_fw_airspd_min,
 		(ParamFloat<px4::params::FW_CLMBOUT_DIFF>) _param_fw_clmbout_diff,
-		(ParamInt<px4::params::FW_PWM_BUFF_REL>) _pwm_buff_rel,
-		(ParamInt<px4::params::FW_PWM_BUFF_DROP>) _pwm_buff_drop,
-		(ParamInt<px4::params::FW_PWM_PRCH_REL>) _pwm_parach_rel,
-		(ParamInt<px4::params::FW_PWM_PRCH_DROP>) _pwm_parach_drop
+		// (ParamInt<px4::params::FW_PWM_BUFF_REL>) _pwm_buff_rel,
+		// (ParamInt<px4::params::FW_PWM_BUFF_DROP>) _pwm_buff_drop,
+		// (ParamInt<px4::params::FW_PWM_PRCH_REL>) _pwm_parach_rel,
+		// (ParamInt<px4::params::FW_PWM_PRCH_DROP>) _pwm_parach_drop
 	)
 
 };
