@@ -1494,7 +1494,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
 
                 float setThrMax = 1.0f;
-                float setThrMin = 1.0f;
+                float setThrMin = 0.13f;
 
                 param_set(param_find("FW_THR_MAX"), &setThrMax);
                 param_set(param_find("FW_THR_MIN"), &setThrMin);
@@ -1508,7 +1508,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
                     float minArspd = 22.f;
 					float trimArspd = 25.f;
-					float maxArspd = 30.f;
+					float maxArspd = 28.f;
 					param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
                     param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
 					param_set(param_find("FW_AIRSPD_TRIM"), &trimArspd);
@@ -1517,7 +1517,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                     manualAirspeedEnabled = false;
                     checkAirspeed = false;
                     manualAirspeedCounter = 0;
-                    mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
+                    //mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
 
                     _launch_detection_notify = hrt_absolute_time();
                 }
@@ -1528,7 +1528,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 /* update our copy of the launch detection state */
                 _launch_detection_state = _launchDetector.getLaunchDetected();
             } else {
-                    float setThrMin = 0.12f;
+                    float setThrMin = 0.13f;
                     param_set(param_find("FW_THR_MIN"), &setThrMin);
             }
 
@@ -1577,7 +1577,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
                     manualAirspeedEnabled = true;
                     checkAirspeed = true;
-                    float setThrMin = 0.12f;
+                    float setThrMin = 0.13f;
                     param_set(param_find("FW_THR_MIN"), &setThrMin);
                     if (test == 0) {
                         mavlink_log_critical(&_mavlink_log_pub, "Airspeed now active");

@@ -561,6 +561,16 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
 		else 
 			act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+
+		tune_control_s tune_control = {};
+		orb_advert_t tune_control_pub = nullptr;     
+		tune_control_pub = orb_advertise(ORB_ID(tune_control), &tune_control);
+
+		tune_control.tune_id = 8;
+		tune_control.volume = tune_control_s::VOLUME_LEVEL_MAX;
+		tune_control.tune_override = 1;
+		tune_control.timestamp = hrt_absolute_time();
+		orb_publish(ORB_ID(tune_control), tune_control_pub, &tune_control);
 	} else if (cmd_mavlink.command == MAV_CMD_DROP_BUFFER_PARACHUTE){
 
 		act1.control[7] = 1.0f;

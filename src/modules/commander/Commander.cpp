@@ -1680,6 +1680,15 @@ Commander::run()
 				if (was_landed != land_detector.landed) {
 					if (land_detector.landed) {
 						mavlink_and_console_log_info(&mavlink_log_pub, "Landing detected");
+						tune_control_s tune_control = {};
+						orb_advert_t tune_control_pub = nullptr;     
+						tune_control_pub = orb_advertise(ORB_ID(tune_control), &tune_control);
+
+						tune_control.tune_id = 8;
+						tune_control.volume = tune_control_s::VOLUME_LEVEL_MAX;
+						tune_control.tune_override = 1;
+						tune_control.timestamp = hrt_absolute_time();
+						orb_publish(ORB_ID(tune_control), tune_control_pub, &tune_control);
 
 					} else {
 						mavlink_and_console_log_info(&mavlink_log_pub, "Takeoff detected");
