@@ -1494,7 +1494,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
 
                 float setThrMax = 1.0f;
-                float setThrMin = 0.13f;
+                float setThrMin = 0.19f;
 
                 param_set(param_find("FW_THR_MAX"), &setThrMax);
                 param_set(param_find("FW_THR_MIN"), &setThrMin);
@@ -1517,7 +1517,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                     manualAirspeedEnabled = false;
                     checkAirspeed = false;
                     manualAirspeedCounter = 0;
-                    //mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
+                    mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
 
                     _launch_detection_notify = hrt_absolute_time();
                 }
@@ -1528,7 +1528,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 /* update our copy of the launch detection state */
                 _launch_detection_state = _launchDetector.getLaunchDetected();
             } else {
-                    float setThrMin = 0.13f;
+                    float setThrMin = 0.19f;
                     param_set(param_find("FW_THR_MIN"), &setThrMin);
             }
 
@@ -1547,6 +1547,8 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
             /* Select throttle: only in LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS we want to use
              * full throttle, otherwise we use idle throttle */
+            float takeoff_throttle = _parameters.throttle_max;
+            
             if (checkAirspeed) {
                 int test = -1;
                 param_get(_parameter_handles.airspeed_disabled, &test);
@@ -1560,7 +1562,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 }
                 checkAirspeed = false;
             }
-            float takeoff_throttle = _parameters.throttle_max;
+            
             if (!manualAirspeedEnabled) {
                 if (manualAirspeedCounter == 0) {
                     mavlink_log_critical(&_mavlink_log_pub, "Start counter 000100");
@@ -1572,12 +1574,12 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                     param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
                     mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
 
-                    int test = -1;
+                    int test = 0;
                     param_get(_parameter_handles.airspeed_disabled, &test);
 
                     manualAirspeedEnabled = true;
                     checkAirspeed = true;
-                    float setThrMin = 0.13f;
+                    float setThrMin = 0.19f;
                     param_set(param_find("FW_THR_MIN"), &setThrMin);
                     if (test == 0) {
                         mavlink_log_critical(&_mavlink_log_pub, "Airspeed now active");

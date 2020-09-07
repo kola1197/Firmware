@@ -574,8 +574,8 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 	} else if (cmd_mavlink.command == MAV_CMD_DROP_BUFFER_PARACHUTE){
 
 		act1.control[7] = 1.0f;
-		act1.control[6] = 0.0;
-		act.timestamp = hrt_absolute_time();
+		act1.control[6] = 0.0f;
+		act1.timestamp = hrt_absolute_time();
 		if (act_pub1 != nullptr)
 			orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
 		else
