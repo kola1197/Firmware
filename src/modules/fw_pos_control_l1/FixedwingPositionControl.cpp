@@ -1444,17 +1444,6 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                 mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
 
-                if (airframe_mode == 0) {
-                    mavlink_log_critical(&_mavlink_log_pub, "I am FIXED_WING");
-                }
-                if (airframe_mode == 1) {
-                    mavlink_log_critical(&_mavlink_log_pub, "I am STANDART PLANE");
-                }
-                // test_land_parachute_buffer_release();
-
-                int setAirspeed = 1;
-                param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
-
                 float setThrMax = 1.0f;
                 float setThrMin = 0.1f;
 
@@ -1477,7 +1466,6 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 manualAirspeedEnabled = false;
                 checkAirspeed = false;
                 manualAirspeedCounter = 0;
-                mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
 
                 _launch_detection_notify = hrt_absolute_time();
             }
@@ -1504,43 +1492,8 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
         /* Select throttle: only in LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS we want to use
             * full throttle, otherwise we use idle throttle */
-        if (checkAirspeed) {
-            int test = -1;
-            param_get(_parameter_handles.airspeed_disabled, &test);
-
-            manualAirspeedEnabled = true;
-            mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
-            if (test == 0) {
-                mavlink_log_critical(&_mavlink_log_pub, "Airspeed now active");
-            } else {
-                mavlink_log_critical(&_mavlink_log_pub, "Airspeed activation failed");
-            }
-            checkAirspeed = false;
-        }
         float takeoff_throttle = _parameters.throttle_max;
-        if (!manualAirspeedEnabled) {
-            if (manualAirspeedCounter == 0) {
-                mavlink_log_critical(&_mavlink_log_pub, "Start counter 000100");
-            }
-            if (manualAirspeedCounter < 100) {                // 50 = 1 second
-                manualAirspeedCounter++;
-            } else {
-                int setAirspeed = 0;
-                param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
-                mavlink_log_critical(&_mavlink_log_pub, "fixing Airspeed");
 
-                int test = -1;
-                param_get(_parameter_handles.airspeed_disabled, &test);
-
-                manualAirspeedEnabled = true;
-                checkAirspeed = true;
-                if (test == 0) {
-                    mavlink_log_critical(&_mavlink_log_pub, "Airspeed now active");
-                } else {
-                    mavlink_log_critical(&_mavlink_log_pub, "Airspeed activation failed");
-                }
-            }
-        }
         if (_launch_detection_state != LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS) {
             takeoff_throttle = _parameters.throttle_idle;
         }
@@ -1555,7 +1508,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             /* enforce a minimum of 10 degrees pitch up on takeoff, or take parameter */
             tecs_update_pitch_throttle(pos_sp_curr.alt,
                                         _parameters.airspeed_trim,
-                                        radians(_parameters.pitch_limit_min),
+                                        radians(10.0f),
                                         radians(takeoff_pitch_max_deg),
                                         _parameters.throttle_min,
                                         takeoff_throttle,
@@ -1565,7 +1518,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                                         tecs_status_s::TECS_MODE_TAKEOFF);
 
             /* limit roll motion to ensure enough lift */
-            _att_sp.roll_body = constrain(_att_sp.roll_body, radians(-15.0f), radians(15.0f));
+            _att_sp.roll_body = constrain(_att_sp.roll_body, radians(-5.0f), radians(5.0f));
 
         } else {
             tecs_update_pitch_throttle(pos_sp_curr.alt,
