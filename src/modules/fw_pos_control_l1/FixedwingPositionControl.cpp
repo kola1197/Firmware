@@ -86,6 +86,7 @@ FixedwingPositionControl::FixedwingPositionControl() :
     _parameter_handles.land_throtTC_scale = param_find("FW_LND_THRTC_SC");
 
     _parameter_handles.loiter_radius = param_find("NAV_LOITER_RAD");
+    _parameter_handles.sys_autostart = param_find("SYS_AUTOSTART");
 
     _parameter_handles.time_const = param_find("FW_T_TIME_CONST");
     _parameter_handles.time_const_throt = param_find("FW_T_THRO_CONST");
@@ -118,13 +119,6 @@ FixedwingPositionControl::FixedwingPositionControl() :
 
 FixedwingPositionControl::~FixedwingPositionControl() {
     perf_free(_loop_perf);
-    int setAirspeed = 1;
-    param_set(param_find("FW_ARSP_MODE"), &setAirspeed);
-    mavlink_log_critical(&_mavlink_log_pub, "Airspeed disabled");
-
-    manualAirspeedEnabled = false;
-    checkAirspeed = false;
-    manualAirspeedCounter = 0;
 }
 
 int
@@ -165,6 +159,7 @@ FixedwingPositionControl::parameters_update() {
     param_get(_parameter_handles.land_airspeed_scale, &(_parameters.land_airspeed_scale));
     param_get(_parameter_handles.land_throtTC_scale, &(_parameters.land_throtTC_scale));
     param_get(_parameter_handles.loiter_radius, &(_parameters.loiter_radius));
+    param_get(_parameter_handles.sys_autostart, &(_parameters.sys_autostart));
 
     // VTOL parameter VTOL_TYPE
     if (_parameter_handles.vtol_type != PARAM_INVALID) {
@@ -393,7 +388,7 @@ void
 FixedwingPositionControl::airspeed_poll() {
     bool airspeed_valid = _airspeed_valid;
 
-    if (!_parameters.airspeed_disabled && manualAirspeedEnabled && _sub_airspeed.update()) {
+    if (!_parameters.airspeed_disabled && _sub_airspeed.update()) {
 
         const airspeed_s &as = _sub_airspeed.get();
 
@@ -1368,38 +1363,6 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
     return setpoint;
 }
 
-
-void
-FixedwingPositionControl::test_land_parachute_buffer_release(){
-    landCounter++;
-    if (landCounter > 2 && landCounter < 5) {
-        mavlink_log_critical(&_mavlink_log_pub, "Buffer + Parachute");
-
-        act1.control[5] = -0.9f;
-        act1.control[6] = 0.15f;
-
-
-        if (act_pub1 != nullptr) {
-            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-        } else {
-            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-        }
-    }
-    if (landCounter > 4 && landCounter < 8) {
-        mavlink_log_critical(&_mavlink_log_pub, "Now drop");
-        act1.control[7] = -1.0f;
-
-        if (act_pub1 != nullptr) {
-            orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-        } else {
-            act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-        }
-    }
-
-    px4_usleep(50000);
-
-}
-
 void
 FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector2f &ground_speed,
                                           const position_setpoint_s &pos_sp_prev,
@@ -1453,7 +1416,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 float minArspd = 20.f;
                 float trimArspd = 22.f;
                 float maxArspd = 26.f;
-                if (airframe_mode == 1){
+                if (_parameters.sys_autostart == 2101){
                     minArspd = 20.f;
                     trimArspd = 24.f;
                     maxArspd = 32.f;
@@ -1461,11 +1424,6 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                 param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
                 param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
                 param_set(param_find("FW_AIRSPD_TRIM"), &trimArspd);
-
-                parashute_set = false;
-                manualAirspeedEnabled = false;
-                checkAirspeed = false;
-                manualAirspeedCounter = 0;
 
                 _launch_detection_notify = hrt_absolute_time();
             }
@@ -1561,9 +1519,9 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         throttle_max = _parameters.throttle_max;
         throttle_min = _parameters.throttle_min;
     } else if (wp_distance > 50.f) {
-        throttle_land = 0.15f;
-        throttle_max = 0.15f;
-        throttle_min = 0.15f;
+        throttle_land = _parameters.throttle_idle;
+        throttle_max = _parameters.throttle_idle;
+        throttle_min = _parameters.throttle_idle;
     } else if (wp_distance > 20.f) {
         _land_motor_lim = true;
         throttle_land = 0.f;
@@ -1574,10 +1532,10 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         throttle_max = 0.f;
         throttle_min = 0.f;
 
-        if (airframe_mode == 0) {
+        if (_parameters.sys_autostart == 3239) {
             act1.control[5] = 0.65f;
         }
-        if (airframe_mode == 1) {
+        if (_parameters.sys_autostart == 2101) {
             act1.control[5] = -0.97f; //parachute drop
             act1.control[6] = 0.15f; //buffer drop
         }
@@ -1591,7 +1549,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
 
     }
 
-    if (!parachute_dropped && _vehicle_land_detected.landed) {
+    if (!parachute_dropped && _vehicle_land_detected.landed && _global_pos.alt < 10.f) {
 
         tune_control_s tune_control = {};
         orb_advert_t tune_control_pub = nullptr;
@@ -1604,7 +1562,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         orb_publish(ORB_ID(tune_control), tune_control_pub, &tune_control);
 
         mavlink_log_critical(&_mavlink_log_pub, "parachute dropped");
-        parashute_dropped = true;
+        parachute_dropped = true;
 
         // if (airframe_mode == 0){
         // act1.control[5] = 0.92f;
@@ -1896,7 +1854,7 @@ FixedwingPositionControl::tecs_update_pitch_throttle(float alt_sp, float airspee
             _was_in_transition = true;
 
             // set this to transition airspeed to init tecs correctly
-            if (_parameters.airspeed_disabled && manualAirspeedEnabled) {
+            if (_parameters.airspeed_disabled && PX4_ISFINITE(_parameters.airspeed_trans)) {
                 // some vtols fly without airspeed sensor
                 _asp_after_transition = _parameters.airspeed_trans;
 

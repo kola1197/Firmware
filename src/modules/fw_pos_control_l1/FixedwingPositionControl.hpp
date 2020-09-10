@@ -147,22 +147,9 @@ public:
 
     /** @see ModuleBase::print_status() */
     int print_status() override;
-    bool manualAirspeedEnabled = false;
-    bool checkAirspeed = false;
-    int manualAirspeedCounter = 0;
-    bool parashute_set = false;
-    int land_counter = 0 ;
-    bool throttle_limited_0 = false;
-    bool throttle_limited_15 = false;
-    double prevX = -239;
-    double prevY = -239;
-    int landCounter = 0;
-    double testDouble = 0.0;
-    bool testParachuteDrop = false;
-    bool parashute_dropped = false;
-    bool start_parachute_release = false;
-    int parachute_release_counter = 0;
-    int airframe_mode = 0;        // 0 -101 , 1 - diam20
+
+    bool parachute_dropped = false;
+    //int airframe_mode = 0;        // 0 -101 , 1 - diam20
 
     //turning loop
         double loop_pre_exit_lat{0.f};
@@ -350,6 +337,7 @@ private:
         float land_throtTC_scale;
 
         float loiter_radius;
+        int32_t sys_autostart;
 
         // VTOL
         float airspeed_trans;
@@ -417,6 +405,7 @@ private:
         param_t land_throtTC_scale;
 
         param_t loiter_radius;
+        param_t sys_autostart;
 
         param_t vtol_type;
     } _parameter_handles {};				///< handles for interesting parameters */
@@ -494,7 +483,6 @@ private:
     void		calculate_gndspeed_undershoot(const Vector2f &curr_pos, const Vector2f &ground_speed,
                                               const position_setpoint_s &pos_sp_prev, const position_setpoint_s &pos_sp_curr);
 
-    void                test_land_parachute_buffer_release();
     /**
      * Handle incoming vehicle commands
      */
