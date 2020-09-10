@@ -149,7 +149,6 @@ public:
     int print_status() override;
 
     bool parachute_dropped = false;
-    //int airframe_mode = 0;        // 0 -101 , 1 - diam20
 
     //turning loop
         double loop_pre_exit_lat{0.f};
