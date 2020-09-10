@@ -1406,25 +1406,6 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             /* Inform user that launchdetection is running every 4s */
             if (hrt_elapsed_time(&_launch_detection_notify) > 4e6) {
                 mavlink_log_critical(&_mavlink_log_pub, "Launch detection running 010");
-
-                float setThrMax = 1.0f;
-                float setThrMin = 0.1f;
-
-                param_set(param_find("FW_THR_MAX"), &setThrMax);
-                param_set(param_find("FW_THR_MIN"), &setThrMin);
-
-                float minArspd = 20.f;
-                float trimArspd = 22.f;
-                float maxArspd = 26.f;
-                if (_parameters.sys_autostart == 2101){
-                    minArspd = 20.f;
-                    trimArspd = 24.f;
-                    maxArspd = 32.f;
-                }
-                param_set(param_find("FW_AIRSPD_MIN"), &minArspd);
-                param_set(param_find("FW_AIRSPD_MAX"), &maxArspd);
-                param_set(param_find("FW_AIRSPD_TRIM"), &trimArspd);
-
                 _launch_detection_notify = hrt_absolute_time();
             }
 
