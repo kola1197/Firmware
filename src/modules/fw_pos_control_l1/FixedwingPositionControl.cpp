@@ -1453,7 +1453,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                                         takeoff_throttle,
                                         _parameters.throttle_cruise,
                                         true,
-                                        max(radians(pos_sp_curr.pitch_min), radians(10.0f)),
+                                        max(radians(pos_sp_curr.pitch_min), radians(20.0f)),
                                         tecs_status_s::TECS_MODE_TAKEOFF);
 
             /* limit roll motion to ensure enough lift */
