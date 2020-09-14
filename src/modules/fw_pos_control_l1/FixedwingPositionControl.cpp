@@ -1447,7 +1447,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             /* enforce a minimum of 10 degrees pitch up on takeoff, or take parameter */
             tecs_update_pitch_throttle(pos_sp_curr.alt,
                                         _parameters.airspeed_trim,
-                                        radians(20.0f),
+                                        radians(10.0f),
                                         radians(takeoff_pitch_max_deg),
                                         _parameters.throttle_min,
                                         takeoff_throttle,
@@ -1457,7 +1457,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
                                         tecs_status_s::TECS_MODE_TAKEOFF);
 
             /* limit roll motion to ensure enough lift */
-            _att_sp.roll_body = constrain(_att_sp.roll_body, radians(-5.0f), radians(5.0f));
+            _att_sp.roll_body = constrain(_att_sp.roll_body, radians(-10.0f), radians(10.0f));
 
         } else {
             tecs_update_pitch_throttle(pos_sp_curr.alt,
@@ -1489,7 +1489,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
                                               const position_setpoint_s &pos_sp_prev,
                                               const position_setpoint_s &pos_sp_curr, float wp_distance) {
 
-    const float airspeed_land = _parameters.land_airspeed_scale * _parameters.airspeed_min;
+    const float airspeed_land = _parameters.airspeed_min;
 
     float throttle_land = 0.f;
     float throttle_max = 0.f;
@@ -1509,11 +1509,8 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
         throttle_max = 0.f;
         throttle_min = 0.f;
     } else {
-        throttle_land = 0.f;
-        throttle_max = 0.f;
-        throttle_min = 0.f;
 
-        if (!zero_thr){
+        if (!parachute_released){
             if (_parameters.sys_autostart == 3239) {
                 act1.control[5] = 0.65f;
             }
@@ -1528,12 +1525,13 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
             } else {
                 act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
             }
+            mavlink_log_critical(&_mavlink_log_pub, "Parachute is released");
         }
 
-        zero_thr = true;
+        parachute_released = true;
 
     }
-    if (zero_thr){
+    if (parachute_released){
         throttle_land = 0.f;
         throttle_max = 0.f;
         throttle_min = 0.f;
@@ -1617,7 +1615,7 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
 			act1.control[7] = 1.0f;
 			act1.control[6] = 0.0;
 		} else {
-			//_mavlink->send_statustext_critical("Unsupported airframe");
+            mavlink_log_critical(&_mavlink_log_pub, "Unsupported airframe");
 		}
 		act1.timestamp = hrt_absolute_time();
 		if (act_pub1 != nullptr) {
@@ -1626,29 +1624,8 @@ FixedwingPositionControl::new_control_landing(const Vector2f &curr_pos, const Ve
 			act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
 		}
 
-        mavlink_log_critical(&_mavlink_log_pub, "parachute dropped");
+        mavlink_log_critical(&_mavlink_log_pub, "Parachute is dropped");
         parachute_dropped = true;
-
-        // if (airframe_mode == 0){
-        // act1.control[5] = 0.92f;
-        // act1.timestamp = hrt_absolute_time();
-        //         if (act_pub1 != nullptr) {
-        //             orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-        //         } else {
-        //             act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-        //         }
-        // //result = ioctl(fd, PWM_SERVO_SET(nServ), 1920);
-        // }
-        // if (airframe_mode == 1){
-        //     act1.control[7] = 1.0f;
-        //     act1.timestamp = hrt_absolute_time();
-        //             if (act_pub1 != nullptr) {
-        //                 orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-        //             } else {
-        //                 act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-        //             }
-        //     //result = ioctl(fd, PWM_SERVO_SET(nServ), 2000);
-        // }
     }
 
     tecs_update_pitch_throttle(pos_sp_curr.alt,
