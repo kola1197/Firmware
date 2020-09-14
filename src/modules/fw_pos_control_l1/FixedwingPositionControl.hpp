@@ -252,6 +252,7 @@ private:
     float _flare_curve_alt_rel_last{0.0f};
     float _target_bearing{0.0f};				///< estimated height to ground at which flare started */
 
+    bool zero_thr = false;
     bool _was_in_air{false};				///< indicated wether the plane was in the air in the previous interation*/
     hrt_abstime _time_went_in_air{0};			///< time at which the plane went in the air */
 

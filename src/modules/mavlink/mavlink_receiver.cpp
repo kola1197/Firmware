@@ -593,18 +593,18 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
 		}
 
-		tune_control_s tc = {};
-		orb_advert_t tune_control_pub = nullptr;
+		// tune_control_s tc = {};
+		// orb_advert_t tune_control_pub = nullptr;
 
-		tc.tune_id = 8;
-		tc.volume = tune_control_s::VOLUME_LEVEL_MAX;
-		tc.tune_override = 0;
-		tc.timestamp = hrt_absolute_time();
-		if (tune_control_pub != nullptr) {
-                        orb_publish(ORB_ID(tune_control), tune_control_pub, &tc);
-		} else {
-			tune_control_pub = orb_advertise(ORB_ID(tune_control), &tc);
-		}
+		// tc.tune_id = 8;
+		// tc.volume = tune_control_s::VOLUME_LEVEL_MAX;
+		// tc.tune_override = 0;
+		// tc.timestamp = hrt_absolute_time();
+		// if (tune_control_pub != nullptr) {
+                //         orb_publish(ORB_ID(tune_control), tune_control_pub, &tc);
+		// } else {
+		// 	tune_control_pub = orb_advertise(ORB_ID(tune_control), &tc);
+		// }
 	}
 	else if (cmd_mavlink.command == MAV_CMD_SWITCH_REMOTE_OVERRIDE_MODE){
 		if(cmd_mavlink.param1 == 0 ){ //remote controller
