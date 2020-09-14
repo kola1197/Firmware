@@ -1287,7 +1287,7 @@ Commander::run()
 	int cpuload_sub = orb_subscribe(ORB_ID(cpuload));
 	int geofence_result_sub = orb_subscribe(ORB_ID(geofence_result));
 	int land_detector_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
-	int stg_status_sub = orb_subscribe(ORB_ID(stg_status));
+	//int stg_status_sub = orb_subscribe(ORB_ID(stg_status));
 	int offboard_control_mode_sub = orb_subscribe(ORB_ID(offboard_control_mode));
 	int param_changed_sub = orb_subscribe(ORB_ID(parameter_update));
 	int safety_sub = orb_subscribe(ORB_ID(safety));
@@ -1672,18 +1672,18 @@ Commander::run()
 		airspeed_use_check();
 
 		/*Update stg_status check*/
-		bool updated_stg = false;
-		orb_check(stg_status_sub, &updated_stg);
-		if (updated_stg){
-			struct stg_status_s s_s = {};
-			orb_copy(ORB_ID(stg_status), stg_status_sub, &s_s);
+		// bool updated_stg = false;
+		// orb_check(stg_status_sub, &updated_stg);
+		// if (updated_stg){
+		// 	struct stg_status_s s_s = {};
+		// 	orb_copy(ORB_ID(stg_status), stg_status_sub, &s_s);
 
-			if (armed.armed){
-				if(s_s.rpm_cranckshaft < 22) {
+		// 	if (armed.armed){
+		// 		if(s_s.rpm_cranckshaft < 22) {
 					
-				}
-			}
-		}
+		// 		}
+		// 	}
+		// }
 
 		/* Update land detector */
 		orb_check(land_detector_sub, &updated);
@@ -2523,7 +2523,7 @@ Commander::run()
 	orb_unsubscribe(subsys_sub);
 	orb_unsubscribe(param_changed_sub);
 	orb_unsubscribe(land_detector_sub);
-	orb_unsubscribe(stg_status);
+	//orb_unsubscribe(stg_status);
 
 	thread_running = false;
 }

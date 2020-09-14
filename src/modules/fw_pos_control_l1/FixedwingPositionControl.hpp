@@ -147,22 +147,8 @@ public:
 
     /** @see ModuleBase::print_status() */
     int print_status() override;
-    bool manualAirspeedEnabled = false;
-    bool checkAirspeed = false;
-    int manualAirspeedCounter = 0;
-    bool parashute_set = false;
-    int land_counter = 0 ;
-    bool throttle_limited_0 = false;
-    bool throttle_limited_15 = false;
-    double prevX = -239;
-    double prevY = -239;
-    int landCounter = 0;
-    double testDouble = 0.0;
-    bool testParachuteDrop = false;
-    bool parashute_dropped = false;
-    bool start_parachute_release = false;
-    int parachute_release_counter = 0;
-    int airframe_mode = 1;        // 0 -fw , 1 - standart_plane
+    bool parachute_released = false;
+    bool parachute_dropped = false;
 
  //turning loop
         double loop_pre_exit_lat{0.f};
@@ -483,8 +469,6 @@ private:
     void		control_takeoff(const Vector2f &curr_pos, const Vector2f &ground_speed, const position_setpoint_s &pos_sp_prev,
                                 const position_setpoint_s &pos_sp_curr);
     void		control_landing(const Vector2f &curr_pos, const Vector2f &ground_speed, const position_setpoint_s &pos_sp_prev,
-                                const position_setpoint_s &pos_sp_curr);
-    void		new_control_landing(const Vector2f &curr_pos, const Vector2f &ground_speed, const position_setpoint_s &pos_sp_prev,
                                     const position_setpoint_s &pos_sp_curr, float wp_distance);
     float		get_tecs_pitch();
     float		get_tecs_thrust();
@@ -494,7 +478,6 @@ private:
     void		calculate_gndspeed_undershoot(const Vector2f &curr_pos, const Vector2f &ground_speed,
                                               const position_setpoint_s &pos_sp_prev, const position_setpoint_s &pos_sp_curr);
 
-    void                test_land_parachute_buffer_release();
     /**
      * Handle incoming vehicle commands
      */
