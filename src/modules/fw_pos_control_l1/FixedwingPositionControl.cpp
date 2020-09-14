@@ -1511,7 +1511,6 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
 
         px4_arch_configgpio(GPIO_GPIO4_OUTPUT);
         px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, false);
-
         mavlink_log_critical(&_mavlink_log_pub, "Engine OFF");
     } else {
 
@@ -1527,7 +1526,6 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
             }
             mavlink_log_critical(&_mavlink_log_pub, "Parachute is released");
         }
-
         parachute_released = true;
 
     }
@@ -1538,8 +1536,6 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
     }
 
     if (!parachute_dropped && _vehicle_land_detected.landed) {
-        int sys_autostart = 0;
-		param_get(param_find("SYS_AUTOSTART"), &sys_autostart);
 
         vehicle_command_s vcmd_disarm = {};
         vcmd_disarm.timestamp = hrt_absolute_time();
