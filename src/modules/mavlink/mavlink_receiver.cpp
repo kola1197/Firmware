@@ -478,14 +478,14 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 	if (cmd_mavlink.command == MAV_CMD_RELEASE_BUFFER_PARACHUTE) {
 
 		int sys_autostart = 0;
-		float idle_thr = 0.f;
+		float min_thr = 0.f;
 		param_get(param_find("SYS_AUTOSTART"), &sys_autostart);
-		param_get(param_find("FW_THR_IDLE"), &idle_thr);
+		param_get(param_find("FW_THR_MIN"), &min_thr);
 
 		int disable_airspeed = 1;
                 param_set(param_find("FW_ARSP_MODE"), &disable_airspeed);
 
-            	param_set(param_find("FW_THR_MAX"), &idle_thr);
+            	param_set(param_find("FW_THR_MAX"), &min_thr);
 
 		px4_sleep(2);
 
@@ -567,7 +567,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 
 		px4_sleep(2);
 		float thr_100 = 1.f;
-		param_set(param_find("FW_THR_MIN"), &idle_thr);
+		param_set(param_find("FW_THR_MIN"), &min_thr);
 		param_set(param_find("FW_THR_MAX"), &thr_100);
 
 		int enable_airspeed = 0;
