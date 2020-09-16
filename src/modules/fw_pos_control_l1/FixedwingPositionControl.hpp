@@ -84,6 +84,7 @@
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/engine_status.h>
 #include <uORB/uORB.h>
 #include <vtol_att_control/vtol_type.h>
 
@@ -150,6 +151,8 @@ public:
     bool parachute_released = false;
     bool parachute_dropped = false;
 
+    bool ready_to_fly = false;
+
  //turning loop
         double loop_pre_exit_lat{0.f};
         double loop_pre_exit_lon{0.f};
@@ -181,6 +184,7 @@ private:
     int		_params_sub{-1};			///< notification of parameter updates */
     int		_manual_control_sub{-1};		///< notification of manual control updates */
     int		_sensor_baro_sub{-1};
+    int         _engine_status_sub{-1};
 
     orb_advert_t	_attitude_sp_pub{nullptr};		///< attitude setpoint */
     orb_advert_t	_pos_ctrl_status_pub{nullptr};		///< navigation capabilities publication */
@@ -206,6 +210,7 @@ private:
     vehicle_local_position_s	_local_pos {};			///< vehicle local position */
     vehicle_land_detected_s		_vehicle_land_detected {};	///< vehicle land detected */
     vehicle_status_s		_vehicle_status {};		///< vehicle status */
+    engine_status_s             _ess{};
     struct actuator_controls_s act = {};
     struct actuator_controls_s act0 = {};
     struct actuator_controls_s act1 = {};
@@ -427,6 +432,7 @@ private:
     void		tecs_status_publish();
 
     void		abort_landing(bool abort);
+    void                engine_status_poll();
 
     /**
      * Get a new waypoint based on heading and distance from current position

@@ -83,6 +83,7 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_trajectory_waypoint.h>
 #include <uORB/topics/stg_status.h>
+#include <uORB/topics/engine_status.h>
 
 #include "mavlink_ftp.h"
 #include "mavlink_log_handler.h"

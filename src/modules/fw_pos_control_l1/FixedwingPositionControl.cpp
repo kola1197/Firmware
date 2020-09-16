@@ -335,6 +335,19 @@ FixedwingPositionControl::vehicle_command_poll() {
 }
 
 void
+FixedwingPositionControl::engine_status_poll() {
+    bool updated;
+
+    orb_check(_engine_status_sub, &updated);
+
+    if (updated) {
+        orb_copy(ORB_ID(engine_status), _engine_status_sub, &_ess);
+        if (_ess.eng_st == 1)
+            ready_to_fly = true;
+    }
+}
+
+void
 FixedwingPositionControl::vehicle_status_poll() {
     bool updated;
 
@@ -1306,7 +1319,10 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         /* making sure again that the correct thrust is used,
          * without depending on library calls for safety reasons.
            the pre-takeoff throttle and the idle throttle normally map to the same parameter. */
-        _att_sp.thrust_body[0] = _parameters.throttle_idle;
+        if (!ready_to_fly)
+            _att_sp.thrust_body[0] = _parameters.throttle_idle;
+        else 
+            _att_sp.thrust_body[0] = _parameters.throttle_max;
 
     } else if (_control_mode_current == FW_POSCTRL_MODE_AUTO &&
                pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF &&
@@ -1326,8 +1342,11 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         /* Copy thrust and pitch values from tecs */
         if (_vehicle_land_detected.landed) {
             // when we are landed state we want the motor to spin at idle speed
-            _att_sp.thrust_body[0] = min(_parameters.throttle_idle, throttle_max);
-
+            if (!ready_to_fly)
+                _att_sp.thrust_body[0] = min(_parameters.throttle_idle, throttle_max);
+            else {
+                _att_sp.thrust_body[0] = 0.f;
+            }
         } else {
             _att_sp.thrust_body[0] = min(get_tecs_thrust(), throttle_max);
         }
@@ -1390,6 +1409,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
     // continuously reset launch detection and runway takeoff until armed
     if (!_control_mode.flag_armed) {
+        ready_to_fly = false;
         _launchDetector.reset();
         _launch_detection_state = LAUNCHDETECTION_RES_NONE;
         _launch_detection_notify = 0;
@@ -1682,6 +1702,7 @@ FixedwingPositionControl::run() {
     _params_sub = orb_subscribe(ORB_ID(parameter_update));
     _manual_control_sub = orb_subscribe(ORB_ID(manual_control_setpoint));
     _sensor_baro_sub = orb_subscribe(ORB_ID(sensor_baro));
+    _engine_status_sub = orb_subscribe(ORB_ID(engine_status));
 
     /* rate limit position updates to 50 Hz */
     orb_set_interval(_global_pos_sub, 20);
@@ -1767,6 +1788,7 @@ FixedwingPositionControl::run() {
             vehicle_control_mode_poll();
             vehicle_land_detected_poll();
             vehicle_status_poll();
+            engine_status_poll();
 
             Vector2f curr_pos((float) _global_pos.lat, (float) _global_pos.lon);
             Vector2f ground_speed(_global_pos.vel_n, _global_pos.vel_e);
