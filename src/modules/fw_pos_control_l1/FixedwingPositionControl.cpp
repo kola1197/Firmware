@@ -345,8 +345,8 @@ FixedwingPositionControl::engine_status_poll() {
         if (_ess.eng_st == 1)
             ready_to_fly = true;
         else if (_was_in_air && _ess.eng_st == 8 && !enable_engine_restart){
-            enable_engine_restart = true;
             _engine_restart_thr_delay = hrt_absolute_time();
+            enable_engine_restart = true;
 
             mavlink_log_critical(&_mavlink_log_pub, "Engine starter on");
 
