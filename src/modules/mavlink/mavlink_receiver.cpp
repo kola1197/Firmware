@@ -631,6 +631,8 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		//_mavlink->send_statustext_critical("send STG_ACTION");
 		vehicle_command_s vcmd_stg = vehicle_command;
 		vcmd_stg.from_external = false;
+		if (vehicle_command.param1 == 1)
+			mavlink_log_critical(&_mavlink_log_pub, "Starter ON");
 		if (_cmd_pub == nullptr) 
 			_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_stg, vehicle_command_s::ORB_QUEUE_LENGTH);
 		else 

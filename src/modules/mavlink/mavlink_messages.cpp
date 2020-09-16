@@ -108,6 +108,7 @@
 #include <uORB/topics/vehicle_air_data.h>
 #include <uORB/topics/vehicle_magnetometer.h>
 #include <uORB/topics/stg_status.h>
+#include <uORB/topics/engine_status.h>
 #include <uORB/uORB.h>
 
 using matrix::wrap_2pi;
@@ -4904,6 +4905,21 @@ protected:
 			_msg_stg_status.stg_errors_bitmask = _stg_status.stg_errors_bitmask;
 
 			mavlink_msg_stg_status_send_struct(_mavlink->get_channel(), &_msg_stg_status);
+
+			if (_stg_status.rpm_cranckshaft < 100){
+				engine_status_s ess = {};
+				ess.timestamp = hrt_absolute_time();
+				ess.eng_st = 8;
+
+				orb_advert_t _cmd_eng_st{nullptr};
+
+				if (_cmd_eng_st == nullptr) {
+					_cmd_eng_st = orb_advertise_queue(ORB_ID(engine_status), &ess, 3);
+					orb_publish(ORB_ID(engine_status), _cmd_eng_st, &ess);
+				} else {
+					orb_publish(ORB_ID(engine_status), _cmd_eng_st, &ess);
+				}
+			}
         
 			// /* battery status message with higher resolution */
 			// mavlink_battery_status_t bat_msg = {};

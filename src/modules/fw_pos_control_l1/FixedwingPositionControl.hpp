@@ -265,6 +265,9 @@ private:
     LaunchDetectionResult _launch_detection_state{LAUNCHDETECTION_RES_NONE};
     hrt_abstime _launch_detection_notify{0};
 
+    hrt_abstime _engine_restart_thr_delay{0};
+    bool enable_engine_restart = false;
+
     RunwayTakeoff _runway_takeoff;
 
     bool _last_manual{false};				///< true if the last iteration was in manual mode (used to determine when a reset is needed)

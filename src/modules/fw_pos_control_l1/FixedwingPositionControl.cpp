@@ -344,6 +344,36 @@ FixedwingPositionControl::engine_status_poll() {
         orb_copy(ORB_ID(engine_status), _engine_status_sub, &_ess);
         if (_ess.eng_st == 1)
             ready_to_fly = true;
+        else if (_was_in_air && _ess.eng_st == 8 && !enable_engine_restart){
+            enable_engine_restart = true;
+            _engine_restart_thr_delay = hrt_absolute_time();
+
+            mavlink_log_critical(&_mavlink_log_pub, "Engine starter on");
+
+            vehicle_command_s vcmd_stg = {};
+            vcmd_stg.param1 = 1;
+            vcmd_stg.param2 = 0;
+            vcmd_stg.param3 = 0;
+            vcmd_stg.param4 = 0;
+            vcmd_stg.param5 = 0;
+            vcmd_stg.param6 = 0;
+            vcmd_stg.param7 = 0;
+            vcmd_stg.command = 20001;
+            vcmd_stg.target_system = 1;
+            vcmd_stg.target_component = 1;
+            vcmd_stg.source_system = 255;
+            vcmd_stg.source_component = 0;
+            vcmd_stg.from_external = false;
+            vcmd_stg.confirmation = 0;
+            vcmd_stg.from_external = true;   
+
+            orb_advert_t _cmd_pub{nullptr};
+
+            if (_cmd_pub == nullptr) 
+                _cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_stg, vehicle_command_s::ORB_QUEUE_LENGTH);
+            else 
+                orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd_stg);
+        }
     }
 }
 
@@ -1349,6 +1379,16 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
             }
         } else {
             _att_sp.thrust_body[0] = min(get_tecs_thrust(), throttle_max);
+        }
+    }
+
+     /* Wait until engin restart */
+    if (enable_engine_restart){
+        _att_sp.thrust_body[0] = _parameters.throttle_idle;
+
+        if (hrt_elapsed_time(&_engine_restart_thr_delay) > 4e6) {
+            enable_engine_restart = false;
+            mavlink_log_critical(&_mavlink_log_pub, "Engine restarted");
         }
     }
 
