@@ -157,7 +157,7 @@ MissionBlock::is_mission_item_reached()
 			/* close to waypoint, but altitude error greater than twice acceptance */
 			if ((dist >= 0.0f)
 			    && (dist_z > 2 * _navigator->get_altitude_acceptance_radius())
-			    && (dist_xy < 2 * _navigator->get_loiter_radius())) {
+			    && (dist_xy < _navigator->get_loiter_radius())) {
 
 				/* SETPOINT_TYPE_POSITION -> SETPOINT_TYPE_LOITER */
 				if (curr_sp->type == position_setpoint_s::SETPOINT_TYPE_POSITION) {
@@ -172,7 +172,7 @@ MissionBlock::is_mission_item_reached()
 				if (curr_sp->type == position_setpoint_s::SETPOINT_TYPE_LOITER) {
 					/* loiter acceptance criteria required to revert back to SETPOINT_TYPE_POSITION */
 					if ((dist >= 0.0f)
-					    && (dist_z < _navigator->get_loiter_radius())
+					    && (dist_z < 1.5f * _navigator->get_altitude_acceptance_radius())
 					    && (dist_xy <= _navigator->get_loiter_radius() * 1.2f)) {
 
 						curr_sp->type = position_setpoint_s::SETPOINT_TYPE_POSITION;
