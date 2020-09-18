@@ -1596,37 +1596,20 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
     }
 
     if (!parachute_dropped && _vehicle_land_detected.landed) {
+        act1.control[7] = 1.0f;
+		act1.control[6] = 0.0f;
+		act1.timestamp = hrt_absolute_time();
+		if (act_pub1 != nullptr) {
+			orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
+		} else {
+			act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
+		}
 
-        vehicle_command_s vcmd_disarm = {};
-        vcmd_disarm.timestamp = hrt_absolute_time();
-        vcmd_disarm.param1 = 0;
-        vcmd_disarm.param2 = 0;
-        vcmd_disarm.param3 = 0;
-        vcmd_disarm.param4 = 0;
-        vcmd_disarm.param5 = 0;
-        vcmd_disarm.param6 = 0;
-        vcmd_disarm.param7 = 0;
-        vcmd_disarm.command = 400;
-        vcmd_disarm.target_system = 1;
-        vcmd_disarm.target_component = 1;
-        vcmd_disarm.source_system = 255;
-        vcmd_disarm.source_component = 0;
+        mavlink_log_critical(&_mavlink_log_pub, "Parachute is dropped");
+        parachute_dropped = true;
 
-        orb_advert_t _cmd_pub1{nullptr};
-
-        vcmd_disarm.confirmation = 0;
-        vcmd_disarm.from_external = true;
-
-        if (_cmd_pub1 == nullptr) {
-            _cmd_pub1 = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_disarm, vehicle_command_s::ORB_QUEUE_LENGTH);
-
-            orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
-        } else {
-            orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
-        }
-
-		//-SET-MODE-START-----------------------------
-
+    //-SET-MODE-START-----------------------------
+        orb_advert_t _cmd_pub_mode{nullptr};
 		vehicle_command_s vcmd_mode = {};
 		vcmd_mode.timestamp = hrt_absolute_time();
 
@@ -1643,18 +1626,41 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
 		vcmd_mode.confirmation = 0;
 		vcmd_mode.from_external = true;
 
-		if (_cmd_pub1 == nullptr) {
-			_cmd_pub1 = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_mode, vehicle_command_s::ORB_QUEUE_LENGTH);
-			orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_mode);
+		if (_cmd_pub_mode == nullptr) {
+			_cmd_pub_mode = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_mode, vehicle_command_s::ORB_QUEUE_LENGTH);
+			orb_publish(ORB_ID(vehicle_command), _cmd_pub_mode, &vcmd_mode);
 		} else {
-			orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_mode);
+			orb_publish(ORB_ID(vehicle_command), _cmd_pub_mode, &vcmd_mode);
 		}
+	//-SET-MODE-END-----------------------------
 
-		//-SET-MODE-END-----------------------------
+        vehicle_command_s vcmd_disarm = {};
+        vcmd_disarm.timestamp = hrt_absolute_time();
+        vcmd_disarm.param1 = 0;
+        vcmd_disarm.param2 = 0;
+        vcmd_disarm.param3 = 0;
+        vcmd_disarm.param4 = 0;
+        vcmd_disarm.param5 = 0;
+        vcmd_disarm.param6 = 0;
+        vcmd_disarm.param7 = 0;
+        vcmd_disarm.command = 400;
+        vcmd_disarm.target_system = 1;
+        vcmd_disarm.target_component = 1;
+        vcmd_disarm.source_system = 255;
+        vcmd_disarm.source_component = 0;
+        vcmd_disarm.confirmation = 0;
+        vcmd_disarm.from_external = true;
+
+        orb_advert_t _cmd_pub1{nullptr};
+        if (_cmd_pub1 == nullptr) {
+            _cmd_pub1 = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_disarm, vehicle_command_s::ORB_QUEUE_LENGTH);
+            orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
+        } else {
+            orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
+        }
 
 		tune_control_s tc = {};
 		orb_advert_t tune_control_pub = nullptr;
-
 		tc.tune_id = 8;
 		tc.volume = tune_control_s::VOLUME_LEVEL_MAX;
 		tc.tune_override = 0;
@@ -1665,17 +1671,7 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
 			tune_control_pub = orb_advertise(ORB_ID(tune_control), &tc);
 		}
 
-		act1.control[7] = 1.0f;
-		act1.control[6] = 0.0f;
-		act1.timestamp = hrt_absolute_time();
-		if (act_pub1 != nullptr) {
-			orb_publish(ORB_ID(actuator_controls_1), act_pub1, &act1);
-		} else {
-			act_pub1 = orb_advertise(ORB_ID(actuator_controls_1), &act1);
-		}
-
-        mavlink_log_critical(&_mavlink_log_pub, "Parachute is dropped");
-        parachute_dropped = true;
+		
     }
 
     tecs_update_pitch_throttle(pos_sp_curr.alt,
