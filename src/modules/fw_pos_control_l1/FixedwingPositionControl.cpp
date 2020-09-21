@@ -1390,7 +1390,7 @@ void
 FixedwingPositionControl::detect_unexpected_descent(position_setpoint_s pos_sp_curr){
     if (!check_unexp_desc){
         float diff = pos_sp_curr.alt - _global_pos.alt;
-        if (diff > 70.f){
+        if (diff > 50.f){
             check_unexp_desc = true;
             dangerous_diff = diff;
             dangerous_dist_to_takeoff_alt = _global_pos.alt - _takeoff_ground_alt;
