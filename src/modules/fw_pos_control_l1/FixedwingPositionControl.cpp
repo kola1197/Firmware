@@ -1386,7 +1386,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
     if (enable_engine_restart){
         _att_sp.thrust_body[0] = _parameters.throttle_idle;
 
-        if (hrt_elapsed_time(&_engine_restart_thr_delay) > 4e6) {
+        if (hrt_elapsed_time(&_engine_restart_thr_delay) > 3e6) {
             enable_engine_restart = false;
             mavlink_log_critical(&_mavlink_log_pub, "Engine restarted");
         }
