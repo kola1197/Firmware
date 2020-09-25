@@ -1504,10 +1504,10 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
 
         /* apply minimum pitch and limit roll if target altitude is not within climbout_diff meters */
         if (_parameters.climbout_diff > 0.0f && altitude_error > _parameters.climbout_diff) {
-            /* enforce a minimum of 10 degrees pitch up on takeoff, or take parameter */
+            /* enforce a minimum of 6 degrees pitch up on takeoff, or take parameter */
             tecs_update_pitch_throttle(pos_sp_curr.alt,
                                         _parameters.airspeed_trim,
-                                        radians(10.0f),
+                                        radians(6.0f),
                                         radians(takeoff_pitch_max_deg),
                                         _parameters.throttle_min,
                                         takeoff_throttle,
