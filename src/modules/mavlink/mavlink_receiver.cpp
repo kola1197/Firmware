@@ -497,6 +497,19 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 			orb_publish(ORB_ID(engine_status), _cmd_eng_st, &ess);
 		}
 	}else if (cmd_mavlink.command ==MAV_CMD_RELEASE_BUFFER_PARACHUTE){
+		engine_status_s ess = {};
+		ess.timestamp = hrt_absolute_time();
+		ess.eng_st = 2;
+
+		orb_advert_t _cmd_eng_st{nullptr};
+
+		if (_cmd_eng_st == nullptr) {
+			_cmd_eng_st = orb_advertise_queue(ORB_ID(engine_status), &ess, 3);
+			orb_publish(ORB_ID(engine_status), _cmd_eng_st, &ess);
+		} else {
+			orb_publish(ORB_ID(engine_status), _cmd_eng_st, &ess);
+		}
+
 		float idle_thr = 0.f;
 		param_get(param_find("FW_THR_IDLE"), &idle_thr);
 

@@ -344,7 +344,9 @@ FixedwingPositionControl::engine_status_poll() {
         orb_copy(ORB_ID(engine_status), _engine_status_sub, &_ess);
         if (_ess.eng_st == 1)
             ready_to_fly = true;
-        else if (_was_in_air && _ess.eng_st == 8 && !enable_engine_restart){
+        else if (_ess.eng_st == 2) {
+            is_landing = true;    
+        } else if (!is_landing && _was_in_air && _ess.eng_st == 8 && !enable_engine_restart){
             _engine_restart_thr_delay = hrt_absolute_time();
             enable_engine_restart = true;
 
@@ -1507,7 +1509,7 @@ FixedwingPositionControl::control_takeoff(const Vector2f &curr_pos, const Vector
             /* enforce a minimum of 6 degrees pitch up on takeoff, or take parameter */
             tecs_update_pitch_throttle(pos_sp_curr.alt,
                                         _parameters.airspeed_trim,
-                                        radians(6.0f),
+                                        radians(8.0f),
                                         radians(takeoff_pitch_max_deg),
                                         _parameters.throttle_min,
                                         takeoff_throttle,
@@ -1549,6 +1551,7 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
                                               const position_setpoint_s &pos_sp_prev,
                                               const position_setpoint_s &pos_sp_curr, float wp_distance) {
 
+    is_landing = true;
     const float airspeed_land = _parameters.airspeed_min;
 
     float throttle_land = 0.f;

@@ -267,6 +267,7 @@ private:
 
     hrt_abstime _engine_restart_thr_delay{0};
     bool enable_engine_restart = false;
+    bool is_landing = false;
 
     RunwayTakeoff _runway_takeoff;
 
