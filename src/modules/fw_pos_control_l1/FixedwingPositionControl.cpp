@@ -1551,7 +1551,6 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
                                               const position_setpoint_s &pos_sp_prev,
                                               const position_setpoint_s &pos_sp_curr, float wp_distance) {
 
-    is_landing = true;
     const float airspeed_land = _parameters.airspeed_min;
 
     float throttle_land = 0.f;
@@ -1563,6 +1562,7 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
         throttle_max = _parameters.throttle_max;
         throttle_min = _parameters.throttle_min;
     } else if (wp_distance > 70.f) {
+        is_landing = true;
         throttle_land = _parameters.throttle_min;
         throttle_max = _parameters.throttle_min;
         throttle_min = _parameters.throttle_min;
