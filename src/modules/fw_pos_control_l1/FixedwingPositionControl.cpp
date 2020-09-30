@@ -1405,6 +1405,7 @@ FixedwingPositionControl::detect_unexpected_descent(position_setpoint_s pos_sp_c
                 //detected an unexpected descent
                 unexpected_descent = true;
                 unexp_desc_time = hrt_absolute_time();
+                mavlink_log_critical(&_mavlink_log_pub, "Unexpected descent %fm/s", (diff - dangerous_diff) / 3.f);
             } else
             {
                 check_unexp_desc = false;
