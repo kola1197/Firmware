@@ -343,9 +343,11 @@ FixedwingPositionControl::engine_status_poll() {
     if (updated) {
         orb_copy(ORB_ID(engine_status), _engine_status_sub, &_ess);
         if (_ess.eng_st == 1)
-            ready_to_fly = true;
+            ready_to_fly = false;
         else if (_ess.eng_st == 2) {
-            is_landing = true;    
+            ready_to_fly = true;
+        } else if (_ess.eng_st == 3) {
+            is_landing = true; 
         } else if (!is_landing && _was_in_air && _ess.eng_st == 8 && !enable_engine_restart){
             _engine_restart_thr_delay = hrt_absolute_time();
             enable_engine_restart = true;
@@ -362,12 +364,11 @@ FixedwingPositionControl::engine_status_poll() {
             vcmd_stg.param7 = 0;
             vcmd_stg.command = 20001;
             vcmd_stg.target_system = 1;
-            vcmd_stg.target_component = 1;
+            vcmd_stg.target_component = 0;
             vcmd_stg.source_system = 255;
             vcmd_stg.source_component = 0;
             vcmd_stg.from_external = false;
             vcmd_stg.confirmation = 0;
-            vcmd_stg.from_external = true;   
 
             orb_advert_t _cmd_pub{nullptr};
 

@@ -486,7 +486,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 	if (cmd_mavlink.command == 60777){
 		engine_status_s ess = {};
 		ess.timestamp = hrt_absolute_time();
-		ess.eng_st = 1;
+		ess.eng_st = cmd_mavlink.param1;
 
 		orb_advert_t _cmd_eng_st{nullptr};
 
@@ -499,7 +499,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 	}else if (cmd_mavlink.command ==MAV_CMD_RELEASE_BUFFER_PARACHUTE){
 		engine_status_s ess = {};
 		ess.timestamp = hrt_absolute_time();
-		ess.eng_st = 2;
+		ess.eng_st = 3;
 
 		orb_advert_t _cmd_eng_st{nullptr};
 
