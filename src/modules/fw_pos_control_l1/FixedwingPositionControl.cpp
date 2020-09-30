@@ -1660,18 +1660,18 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
             orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
         }
 
-		tune_control_s tc = {};
-		tc.tune_id = 8;
-		tc.volume = tune_control_s::VOLUME_LEVEL_MAX;
-		tc.tune_override = 0;
-		tc.timestamp = hrt_absolute_time();
+		// tune_control_s tc = {};
+		// tc.tune_id = 8;
+		// tc.volume = tune_control_s::VOLUME_LEVEL_MAX;
+		// tc.tune_override = 0;
+		// tc.timestamp = hrt_absolute_time();
 
-        orb_advert_t tune_control_pub = nullptr;
-		if (tune_control_pub != nullptr) {
-            orb_publish(ORB_ID(tune_control), tune_control_pub, &tc);
-		} else {
-			tune_control_pub = orb_advertise(ORB_ID(tune_control), &tc);
-		}
+        // orb_advert_t tune_control_pub = nullptr;
+		// if (tune_control_pub != nullptr) {
+        //     orb_publish(ORB_ID(tune_control), tune_control_pub, &tc);
+		// } else {
+		// 	tune_control_pub = orb_advertise(ORB_ID(tune_control), &tc);
+		// }
     }
 
     tecs_update_pitch_throttle(pos_sp_curr.alt,
