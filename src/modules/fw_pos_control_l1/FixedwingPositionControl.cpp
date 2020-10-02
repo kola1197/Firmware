@@ -1354,6 +1354,55 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
             }
             mavlink_log_critical(&_mavlink_log_pub, "Parachute is released");
         }
+        //-SET-MODE-START-----------------------------
+		vehicle_command_s vcmd_mode = {};
+		vcmd_mode.timestamp = hrt_absolute_time();
+		/* copy the content of mavlink_command_long_t cmd_mavlink into command_t cmd */
+		vcmd_mode.param1 = 29;
+		vcmd_mode.param2 = 4;
+		vcmd_mode.param3 = 3;
+		vcmd_mode.command = vehicle_command_s::VEHICLE_CMD_DO_SET_MODE;
+		vcmd_mode.target_system = 1;
+		vcmd_mode.target_component = 1;
+		vcmd_mode.source_system = 255;
+		vcmd_mode.source_component = 0;
+		vcmd_mode.confirmation = 0;
+		vcmd_mode.from_external = true;
+
+        orb_advert_t _cmd_pub_mode{nullptr};
+		if (_cmd_pub_mode == nullptr) {
+			_cmd_pub_mode = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_mode, vehicle_command_s::ORB_QUEUE_LENGTH);
+			orb_publish(ORB_ID(vehicle_command), _cmd_pub_mode, &vcmd_mode);
+		} else {
+			orb_publish(ORB_ID(vehicle_command), _cmd_pub_mode, &vcmd_mode);
+		}
+	//-SET-MODE-END-----------------------------
+
+        vehicle_command_s vcmd_disarm = {};
+        vcmd_disarm.timestamp = hrt_absolute_time();
+        vcmd_disarm.param1 = 0;
+        vcmd_disarm.param2 = 0;
+        vcmd_disarm.param3 = 0;
+        vcmd_disarm.param4 = 0;
+        vcmd_disarm.param5 = 0;
+        vcmd_disarm.param6 = 0;
+        vcmd_disarm.param7 = 0;
+        vcmd_disarm.command = 400;
+        vcmd_disarm.target_system = 1;
+        vcmd_disarm.target_component = 1;
+        vcmd_disarm.source_system = 255;
+        vcmd_disarm.source_component = 0;
+        vcmd_disarm.confirmation = 0;
+        vcmd_disarm.from_external = true;
+
+        orb_advert_t _cmd_pub1{nullptr};
+        if (_cmd_pub1 == nullptr) {
+            _cmd_pub1 = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_disarm, vehicle_command_s::ORB_QUEUE_LENGTH);
+
+            orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
+        } else {
+            orb_publish(ORB_ID(vehicle_command), _cmd_pub1, &vcmd_disarm);
+        }
     }
 
     // decide when to use pitch setpoint from TECS because in some cases pitch
