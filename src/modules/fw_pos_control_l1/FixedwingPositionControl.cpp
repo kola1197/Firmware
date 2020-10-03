@@ -352,6 +352,10 @@ FixedwingPositionControl::engine_status_poll() {
             _engine_restart_thr_delay = hrt_absolute_time();
             enable_engine_restart = true;
 
+            px4_arch_configgpio(GPIO_GPIO4_OUTPUT);
+			px4_arch_gpiowrite(GPIO_GPIO4_OUTPUT, true);
+			mavlink_log_critical(&_mavlink_log_pub, "Engine ON");
+
             mavlink_log_critical(&_mavlink_log_pub, "Engine starter on");
 
             vehicle_command_s vcmd_stg = {};
@@ -1378,7 +1382,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
             if (!ready_to_fly)
                 _att_sp.thrust_body[0] = min(_parameters.throttle_idle, throttle_max);
             else {
-                _att_sp.thrust_body[0] = 0.f;
+                _att_sp.thrust_body[0] = _parameters.throttle_max;
             }
         } else {
             _att_sp.thrust_body[0] = min(get_tecs_thrust(), throttle_max);
