@@ -577,7 +577,7 @@ void MavlinkReceiver::handle_message_command_both(mavlink_message_t *msg, const 
 		param_get(param_find("SYS_AUTOSTART"), &sys_autostart);
 
 		if (sys_autostart == 3239){
-			act1.control[5] = 0.92f;
+			act1.control[5] = 0.9f;
 		} else if (sys_autostart == 2101) {
 			act1.control[7] = 1.0f;
 			act1.control[6] = 0.0;

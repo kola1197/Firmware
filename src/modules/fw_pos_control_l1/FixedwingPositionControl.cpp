@@ -1644,7 +1644,7 @@ FixedwingPositionControl::control_landing(const Vector2f &curr_pos, const Vector
 		param_get(param_find("SYS_AUTOSTART"), &sys_autostart);
 
         if (sys_autostart == 3239){
-			act1.control[5] = 0.92f;
+			act1.control[5] = 0.9f;
 		} else if (sys_autostart == 2101) {
 			act1.control[7] = 1.0f;
 			act1.control[6] = 0.0;
