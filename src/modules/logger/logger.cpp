@@ -50,6 +50,7 @@
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_command_ack.h>
+#include <uORB/topics/camera_capture.h>
 
 #include <drivers/drv_hrt.h>
 #include <px4_getopt.h>
@@ -924,6 +925,7 @@ void Logger::run()
 	int vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 	uORB::Subscription<parameter_update_s> parameter_update_sub(ORB_ID(parameter_update));
 	int log_message_sub = orb_subscribe(ORB_ID(log_message));
+	int camera_sub = orb_subscribe(ORB_ID(camera_capture));
 	orb_set_interval(log_message_sub, 20);
 
 	// mission log topics if enabled (must be added first)
@@ -1008,6 +1010,7 @@ void Logger::run()
 	// the case where we wait with logging until vehicle is armed is handled below
 	if (_log_on_start) {
 		start_log_file(LogType::Full);
+		start_log_file(LogType::Mission);
 	}
 
 	/* init the update timer */
@@ -1131,24 +1134,38 @@ void Logger::run()
 							data_written = true;
 						}
 
-						// mission log
-						if (sub_idx < _num_mission_subs) {
-							if (_writer.is_started(LogType::Mission)) {
-								if (_mission_subscriptions[sub_idx].next_write_time < (loop_time / 100000)) {
-									unsigned delta_time = _mission_subscriptions[sub_idx].min_delta_ms;
-									if (delta_time > 0) {
-										_mission_subscriptions[sub_idx].next_write_time = (loop_time / 100000) + delta_time / 100;
-									}
-									if (write_message(LogType::Mission, _msg_buffer, msg_size)) {
-										data_written = true;
-									}
-								}
-							}
-						}
+						// // mission log
+						// if (sub_idx < _num_mission_subs) {
+						// 	if (_writer.is_started(LogType::Mission)) {
+						// 		if (_mission_subscriptions[sub_idx].next_write_time < (loop_time / 100000)) {
+						// 			unsigned delta_time = _mission_subscriptions[sub_idx].min_delta_ms;
+						// 			if (delta_time > 0) {
+						// 				_mission_subscriptions[sub_idx].next_write_time = (loop_time / 100000) + delta_time / 100;
+						// 			}
+						// 			if (write_message(LogType::Mission, _msg_buffer, msg_size)) {
+						// 				data_written = true;
+						// 			}
+						// 		}
+						// 	}
+						// }
 					}
 				}
 
 				++sub_idx;
+			}
+
+			//check for new camera_capture_message(s)
+			bool camera_updated = false;
+			ret = orb_check(camera_sub, &camera_updated);
+			if (ret == 0 && camera_updated){
+				camera_capture_s cam_cap;
+				orb_copy(ORB_ID(camera_capture), camera_sub, &cam_cap);
+				char message[128];
+				int ret_s = snprintf(message, 128, "%d %d %f %f %f %f %f %f \n",
+								cam_cap.seq, cam_cap.timestamp, cam_cap.lat, cam_cap.lon,
+								cam_cap.alt, cam_cap.alt, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2]);
+
+				write_message(LogType::Mission, message, 128);
 			}
 
 			//check for new logging message(s)
@@ -1491,6 +1508,7 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 	}
 
 	const char *replay_suffix = "";
+	const char *file_type = (type == LogType::Mission) ? "txt" : "ulg";
 
 	if (_replay_file_name) {
 		replay_suffix = "_replayed";
@@ -1506,7 +1524,7 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 
 		char log_file_name_time[16] = "";
 		strftime(log_file_name_time, sizeof(log_file_name_time), "%H_%M_%S", &tt);
-		snprintf(log_file_name, sizeof(LogFileName::log_file_name), "%s%s.ulg", log_file_name_time, replay_suffix);
+		snprintf(log_file_name, sizeof(LogFileName::log_file_name), "%s%s.%s", log_file_name_time, replay_suffix, file_type);
 		snprintf(file_name + n, file_name_size - n, "/%s", log_file_name);
 
 	} else {
@@ -1520,7 +1538,7 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 		/* look for the next file that does not exist */
 		while (file_number <= MAX_NO_LOGFILE) {
 			/* format log file path: e.g. /fs/microsd/log/sess001/log001.ulg */
-			snprintf(log_file_name, sizeof(LogFileName::log_file_name), "log%03u%s.ulg", file_number, replay_suffix);
+			snprintf(log_file_name, sizeof(LogFileName::log_file_name), "log%03u%s.%s", file_number, replay_suffix, file_type);
 			snprintf(file_name + n, file_name_size - n, "/%s", log_file_name);
 
 			if (!util::file_exist(file_name)) {

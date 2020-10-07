@@ -133,9 +133,9 @@ CameraFeedback::task_main()
 
 	// Geotagging subscriptions
 	_gpos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
-	_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+	_att_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
 	struct vehicle_global_position_s gpos = {};
-	struct vehicle_attitude_s att = {};
+	struct vehicle_attitude_setpoint_s att = {};
 
 	bool updated = false;
 
@@ -149,8 +149,11 @@ CameraFeedback::task_main()
 			continue;
 		}
 
+		// bool cycle = false;
+		// orb_check(_trigger_sub, &cycle);
+
 		/* trigger subscription updated */
-		if (fds[0].revents & POLLIN) {
+		if (/*cycle */fds[0].revents & POLLIN) {
 
 			orb_copy(ORB_ID(camera_trigger), _trigger_sub, &trig);
 
@@ -164,15 +167,15 @@ CameraFeedback::task_main()
 			orb_check(_att_sub, &updated);
 
 			if (updated) {
-				orb_copy(ORB_ID(vehicle_attitude), _att_sub, &att);
+				orb_copy(ORB_ID(vehicle_attitude_setpoint), _att_sub, &att);
 			}
 
-			if (trig.timestamp == 0 ||
-			    gpos.timestamp == 0 ||
-			    att.timestamp == 0) {
-				// reject until we have valid data
-				continue;
-			}
+			// if (trig.timestamp == 0 ||
+			//     gpos.timestamp == 0 ||
+			//     att.timestamp == 0) {
+			// 	// reject until we have valid data
+			// 	continue;
+			// }
 
 			struct camera_capture_s capture = {};
 
@@ -195,13 +198,13 @@ CameraFeedback::task_main()
 
 			// Fill attitude data
 			// TODO : this needs to be rotated by camera orientation or set to gimbal orientation when available
-			capture.q[0] = att.q[0];
+			capture.q[0] = att.roll_body;
 
-			capture.q[1] = att.q[1];
+			capture.q[1] = att.pitch_body;
 
-			capture.q[2] = att.q[2];
+			capture.q[2] = att.yaw_body;
 
-			capture.q[3] = att.q[3];
+			capture.q[3] = att.thrust_body[0];
 
 			// Indicate whether capture feedback from camera is available
 			// What is case 0 for capture.result?
