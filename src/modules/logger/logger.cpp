@@ -1161,11 +1161,13 @@ void Logger::run()
 				camera_capture_s cam_cap;
 				orb_copy(ORB_ID(camera_capture), camera_sub, &cam_cap);
 				char message[128];
-				int ret_s = snprintf(message, 128, "%d %d %f %f %f %f %f %f \n",
+				int ret_s = snprintf(message, 128, "%d %d %.20f %.20f %.8f %.4f %.4f %.4f\n",
 								cam_cap.seq, cam_cap.timestamp, cam_cap.lat, cam_cap.lon,
-								cam_cap.alt, cam_cap.alt, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2]);
+								cam_cap.alt, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2]);
 
-				write_message(LogType::Mission, message, 128);
+				mavlink_log_info(&_mavlink_log_pub, "%s", message);
+				//_writer.write_message_straightforward(LogType::Mission, message, ret_s);
+				write_message(LogType::Mission, message, ret_s);
 			}
 
 			//check for new logging message(s)
@@ -1759,6 +1761,8 @@ void Logger::write_load_output()
 
 void Logger::write_format(LogType type, const orb_metadata &meta, WrittenFormats &written_formats, ulog_message_format_s& msg, int level)
 {
+	if (type == LogType::Mission)
+		return;
 	if (level > 3) {
 		// precaution: limit recursion level. If we land here it's either a bug or nested topic definitions. In the
 		// latter case, increase the maximum level.
@@ -1891,6 +1895,8 @@ void Logger::write_all_add_logged_msg(LogType type)
 
 void Logger::write_add_logged_msg(LogType type, LoggerSubscription &subscription, int instance)
 {
+	if (type == LogType::Mission)
+		return;
 	ulog_message_add_logged_s msg;
 
 	if (subscription.msg_ids[instance] == (uint8_t) - 1) {
@@ -1920,6 +1926,8 @@ void Logger::write_add_logged_msg(LogType type, LoggerSubscription &subscription
 
 void Logger::write_info(LogType type, const char *name, const char *value)
 {
+	if (type == LogType::Mission)
+		return;
 	_writer.lock();
 	ulog_message_info_header_s msg = {};
 	uint8_t *buffer = reinterpret_cast<uint8_t *>(&msg);
@@ -1945,6 +1953,8 @@ void Logger::write_info(LogType type, const char *name, const char *value)
 
 void Logger::write_info_multiple(LogType type, const char *name, const char *value, bool is_continued)
 {
+	if (type == LogType::Mission)
+		return;
 	_writer.lock();
 	ulog_message_info_multiple_header_s msg;
 	uint8_t *buffer = reinterpret_cast<uint8_t *>(&msg);
@@ -1983,6 +1993,8 @@ void Logger::write_info(LogType type, const char *name, uint32_t value)
 template<typename T>
 void Logger::write_info_template(LogType type, const char *name, T value, const char *type_str)
 {
+	if (type == LogType::Mission)
+		return;
 	_writer.lock();
 	ulog_message_info_header_s msg = {};
 	uint8_t *buffer = reinterpret_cast<uint8_t *>(&msg);
@@ -2005,6 +2017,8 @@ void Logger::write_info_template(LogType type, const char *name, T value, const 
 
 void Logger::write_header(LogType type)
 {
+	if (type == LogType::Mission)
+		return;
 	ulog_file_header_s header = {};
 	header.magic[0] = 'U';
 	header.magic[1] = 'L';
@@ -2031,6 +2045,8 @@ void Logger::write_header(LogType type)
 
 void Logger::write_version(LogType type)
 {
+	if (type == LogType::Mission)
+		return;
 	write_info(type, "ver_sw", px4_firmware_version_string());
 	write_info(type, "ver_sw_release", px4_firmware_version());
 	uint32_t vendor_version = px4_firmware_vendor_version();
@@ -2112,6 +2128,8 @@ void Logger::write_version(LogType type)
 
 void Logger::write_parameters(LogType type)
 {
+	if (type == LogType::Mission)
+		return;
 	_writer.lock();
 	ulog_message_parameter_header_s msg = {};
 	uint8_t *buffer = reinterpret_cast<uint8_t *>(&msg);
@@ -2180,6 +2198,8 @@ void Logger::write_parameters(LogType type)
 
 void Logger::write_changed_parameters(LogType type)
 {
+	if (type == LogType::Mission)
+		return;
 	_writer.lock();
 	ulog_message_parameter_header_s msg = {};
 	uint8_t *buffer = reinterpret_cast<uint8_t *>(&msg);

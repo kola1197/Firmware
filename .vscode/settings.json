@@ -83,7 +83,14 @@
                 "istream": "cpp",
                 "functional": "cpp",
                 "tuple": "cpp",
-                "utility": "cpp"
+                "utility": "cpp",
+                "exception": "cpp",
+                "fstream": "cpp",
+                "iosfwd": "cpp",
+                "new": "cpp",
+                "ostream": "cpp",
+                "sstream": "cpp",
+                "streambuf": "cpp"
         },
         "search.exclude": {
                 "build/**": true

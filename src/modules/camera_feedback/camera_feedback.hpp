@@ -57,7 +57,7 @@
 #include <uORB/uORB.h>
 #include <uORB/topics/camera_trigger.h>
 #include <uORB/topics/camera_capture.h>
-#include <uORB/topics/vehicle_attitude_setpoint.h>
+#include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_global_position.h>
 

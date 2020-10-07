@@ -40,6 +40,7 @@
  */
 
 #include "camera_feedback.hpp"
+#include <lib/matrix/matrix/math.hpp>
 
 namespace camera_feedback
 {
@@ -133,9 +134,9 @@ CameraFeedback::task_main()
 
 	// Geotagging subscriptions
 	_gpos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
-	_att_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
+	_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
 	struct vehicle_global_position_s gpos = {};
-	struct vehicle_attitude_setpoint_s att = {};
+	struct vehicle_attitude_s att = {};
 
 	bool updated = false;
 
@@ -167,7 +168,7 @@ CameraFeedback::task_main()
 			orb_check(_att_sub, &updated);
 
 			if (updated) {
-				orb_copy(ORB_ID(vehicle_attitude_setpoint), _att_sub, &att);
+				orb_copy(ORB_ID(vehicle_attitude), _att_sub, &att);
 			}
 
 			// if (trig.timestamp == 0 ||
@@ -198,13 +199,12 @@ CameraFeedback::task_main()
 
 			// Fill attitude data
 			// TODO : this needs to be rotated by camera orientation or set to gimbal orientation when available
-			capture.q[0] = att.roll_body;
+			matrix::Eulerf euler = matrix::Quatf(att.q);
+			capture.q[0] = euler.phi(); //roll
+			capture.q[1] = euler.theta(); //pitch
+			capture.q[2] = euler.psi(); //yaw
 
-			capture.q[1] = att.pitch_body;
 
-			capture.q[2] = att.yaw_body;
-
-			capture.q[3] = att.thrust_body[0];
 
 			// Indicate whether capture feedback from camera is available
 			// What is case 0 for capture.result?
