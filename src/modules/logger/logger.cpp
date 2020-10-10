@@ -42,6 +42,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
+
+#include <unistd.h>
+#include <stdio.h>
+#include <poll.h>
 
 #include <uORB/uORB.h>
 #include <uORB/uORBTopics.h>
@@ -51,6 +56,7 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_command_ack.h>
 #include <uORB/topics/camera_capture.h>
+#include <uORB/topics/camera_log_file.h>
 
 #include <drivers/drv_hrt.h>
 #include <px4_getopt.h>
@@ -1048,6 +1054,8 @@ void Logger::run()
 	hrt_abstime next_subscribe_check = 0;
 	int next_subscribe_topic_index = -1; // this is used to distribute the checks over time
 
+
+
 	while (!should_exit()) {
 
 		// Start/stop logging when system arm/disarm
@@ -1162,8 +1170,8 @@ void Logger::run()
 				orb_copy(ORB_ID(camera_capture), camera_sub, &cam_cap);
 				char message[128];
 				int ret_s = snprintf(message, 128, "%d %d %.20f %.20f %.8f %.4f %.4f %.4f\n",
-								cam_cap.seq, cam_cap.timestamp, cam_cap.lat, cam_cap.lon,
-								cam_cap.alt, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2]);
+								cam_cap.seq, cam_cap.timestamp_utc, cam_cap.lat, cam_cap.lon,
+				 	 			cam_cap.alt, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2]);
 
 				mavlink_log_info(&_mavlink_log_pub, "%s", message);
 				//_writer.write_message_straightforward(LogType::Mission, message, ret_s);
@@ -1271,6 +1279,7 @@ void Logger::run()
 			while (px4_sem_wait(&timer_callback_data.semaphore) != 0);
 		}
 	}
+
 
 	stop_log_file(LogType::Full);
 	stop_log_file(LogType::Mission);
@@ -1517,9 +1526,10 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 	}
 
 	char *log_file_name = _file_name[(int)type].log_file_name;
+	int n = 0;
 
 	if (time_ok) {
-		int n = create_log_dir(type, &tt, file_name, file_name_size);
+		n = create_log_dir(type, &tt, file_name, file_name_size);
 		if (n < 0) {
 			return -1;
 		}
@@ -1529,8 +1539,9 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 		snprintf(log_file_name, sizeof(LogFileName::log_file_name), "%s%s.%s", log_file_name_time, replay_suffix, file_type);
 		snprintf(file_name + n, file_name_size - n, "/%s", log_file_name);
 
+
 	} else {
-		int n = create_log_dir(type, nullptr, file_name, file_name_size);
+		n = create_log_dir(type, nullptr, file_name, file_name_size);
 		if (n < 0) {
 			return -1;
 		}
@@ -1554,6 +1565,14 @@ int Logger::get_log_file_name(LogType type, char *file_name, size_t file_name_si
 			/* we should not end up here, either we have more than MAX_NO_LOGFILE on the SD card, or another problem */
 			return -1;
 		}
+	}
+	if (type == LogType::Mission){
+		camera_log_file_s cml;
+		cml.timestamp = hrt_absolute_time();
+		snprintf((char *)cml.filename, 128, "%s", file_name);
+		cml.filename[127] = 0; //ensure 0-termination
+		orb_advert_t orb_camera_file_pub = orb_advertise_queue(ORB_ID(camera_log_file), &cml, 3);
+		orb_publish(ORB_ID(camera_log_file), orb_camera_file_pub, &cml);
 	}
 
 	return 0;

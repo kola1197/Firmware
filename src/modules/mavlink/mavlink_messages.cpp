@@ -106,7 +106,9 @@
 #include <uORB/topics/sensor_mag.h>
 #include <uORB/topics/vehicle_air_data.h>
 #include <uORB/topics/vehicle_magnetometer.h>
+#include <uORB/topics/camera_log_file.h>
 #include <uORB/uORB.h>
+
 
 using matrix::wrap_2pi;
 
@@ -2109,6 +2111,46 @@ public:
 		return (_capture_time > 0) ? MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
 	}
 
+	bool request_message(float param2 = 0.0, float param3 = 0.0, float param4 = 0.0,
+				     float param5 = 0.0, float param6 = 0.0, float param7 = 0.0) override{
+		int id = param2;
+
+
+		struct camera_log_file_s cml;
+		struct camera_capture_s curr_cap;
+
+		orb_copy(ORB_ID(camera_log_file), _cam_file_sub, &cml);
+		FILE* camera_file = fopen((char *)cml.filename, "r");
+
+		char message_in[128];
+		while (fgets(message_in ,128, camera_file)){
+			sscanf(message_in, "%d %ld %lf %lf %f %f %f %f", &curr_cap.seq, &curr_cap.timestamp_utc, &curr_cap.lat, &curr_cap.lon,
+							&curr_cap.alt, &curr_cap.q[0], &curr_cap.q[1], &curr_cap.q[2]);
+			if(curr_cap.seq == id){
+				mavlink_camera_image_captured_t msg;
+
+				msg.time_boot_ms = curr_cap.timestamp_utc;
+				msg.time_utc = curr_cap.timestamp_utc;
+				msg.camera_id = 1;	// FIXME : get this from uORB
+				msg.lat = curr_cap.lat * 1e7;
+				msg.lon = curr_cap.lon * 1e7;
+				msg.alt = curr_cap.alt * 1e3f;
+				msg.q[0] = curr_cap.q[0];
+				msg.q[1] = curr_cap.q[1];
+				msg.q[2] = curr_cap.q[2];
+				msg.q[3] = curr_cap.q[3];
+				msg.image_index = curr_cap.seq;
+				msg.capture_result = 1;
+				msg.file_url[0] = '\0';
+				mavlink_msg_camera_image_captured_send_struct(_mavlink->get_channel(), &msg);
+				fclose (camera_file);
+				return true;
+			}
+		}
+		fclose (camera_file);
+		return false;
+	}
+
 private:
 	MavlinkOrbSubscription *_capture_sub;
 	uint64_t _capture_time;
@@ -2122,6 +2164,7 @@ protected:
 		_capture_sub(_mavlink->add_orb_subscription(ORB_ID(camera_capture))),
 		_capture_time(0)
 	{}
+	int _cam_file_sub{orb_subscribe(ORB_ID(camera_log_file))};
 
 	bool send(const hrt_abstime t)
 	{

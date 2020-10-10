@@ -82,6 +82,7 @@
 #include <uORB/topics/vehicle_rates_setpoint.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_trajectory_waypoint.h>
+#include <uORB/topics/camera_log_file.h>
 
 #include "mavlink_ftp.h"
 #include "mavlink_log_handler.h"
@@ -215,6 +216,7 @@ private:
 	MavlinkParametersManager	_parameters_manager;
 
 	mavlink_status_t _status{}; ///< receiver status, used for mavlink_parse_char()
+	orb_advert_t	_mavlink_log_pub{nullptr};
 
 	map_projection_reference_s _hil_local_proj_ref {};
 	offboard_control_mode_s _offboard_control_mode{};
@@ -270,6 +272,7 @@ private:
     	orb_advert_t    act_pub2{nullptr};
     	orb_advert_t    act_pub3{nullptr};
 
+
 	struct actuator_controls_s act = {};
     	struct actuator_controls_s act0 = {};
     	struct actuator_controls_s act1 = {};
@@ -281,6 +284,7 @@ private:
 	int _actuator_armed_sub{orb_subscribe(ORB_ID(actuator_armed))};
 	int _control_mode_sub{orb_subscribe(ORB_ID(vehicle_control_mode))};
 	int _vehicle_attitude_sub{orb_subscribe(ORB_ID(vehicle_attitude))};
+	int _cam_file_sub{orb_subscribe(ORB_ID(camera_log_file))};
 
 	int _orb_class_instance{-1};
 

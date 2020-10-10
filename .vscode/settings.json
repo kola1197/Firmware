@@ -90,7 +90,8 @@
                 "new": "cpp",
                 "ostream": "cpp",
                 "sstream": "cpp",
-                "streambuf": "cpp"
+                "streambuf": "cpp",
+                "cstdio": "cpp"
         },
         "search.exclude": {
                 "build/**": true
