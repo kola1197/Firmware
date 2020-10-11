@@ -1169,9 +1169,9 @@ void Logger::run()
 				camera_capture_s cam_cap;
 				orb_copy(ORB_ID(camera_capture), camera_sub, &cam_cap);
 				char message[256];
-				int ret_s = snprintf(message, 256, "%d %.4f %.4f %.4f %.4f %.16f %.16f %d\n",
+				int ret_s = snprintf(message, 256, "%d %.4f %.4f %.4f %.4f %.16f %.16f %llu \n",
 								cam_cap.seq, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2],
-								cam_cap.alt, cam_cap.lat, cam_cap.lon,cam_cap.timestamp);
+								cam_cap.alt, cam_cap.lat, cam_cap.lon,cam_cap.timestamp_utc);
 
 				mavlink_log_info(&_mavlink_log_pub, "s=%d %s", ret_s, message);
 				//_writer.write_message_straightforward(LogType::Mission, message, ret_s);

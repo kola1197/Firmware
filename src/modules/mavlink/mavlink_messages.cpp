@@ -2124,16 +2124,16 @@ public:
 
 		char message_in[256];
 		while (fgets(message_in ,256, camera_file)){
-			sscanf(message_in, "%d %f %f %f %f %lf %lf %d", &curr_cap.seq, &curr_cap.q[0], &curr_cap.q[1], &curr_cap.q[2],
-									  &curr_cap.alt, &curr_cap.lat, &curr_cap.lon, &curr_cap.timestamp);
+			sscanf(message_in, "%d %f %f %f %f %lf %lf %llu \n", &curr_cap.seq, &curr_cap.q[0], &curr_cap.q[1], &curr_cap.q[2],
+									  &curr_cap.alt, &curr_cap.lat, &curr_cap.lon, &curr_cap.timestamp_utc);
 			if(curr_cap.seq == id){
 				mavlink_camera_image_captured_t msg;
 
 				orb_advert_t	_mavlink_log_pub{nullptr};
 				mavlink_log_info(&_mavlink_log_pub, "%s", message_in);
 
-				msg.time_boot_ms = curr_cap.timestamp;
-				msg.time_utc = 0;
+				msg.time_boot_ms = 0;
+				msg.time_utc = curr_cap.timestamp_utc;
 				msg.camera_id = 1;	// FIXME : get this from uORB
 				msg.lat = curr_cap.lat * 1e7;;
 				msg.lon = curr_cap.lon * 1e7;;
