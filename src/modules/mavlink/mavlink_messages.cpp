@@ -2122,26 +2122,31 @@ public:
 		orb_copy(ORB_ID(camera_log_file), _cam_file_sub, &cml);
 		FILE* camera_file = fopen((char *)cml.filename, "r");
 
-		char message_in[128];
-		while (fgets(message_in ,128, camera_file)){
-			sscanf(message_in, "%d %ld %lf %lf %f %f %f %f", &curr_cap.seq, &curr_cap.timestamp_utc, &curr_cap.lat, &curr_cap.lon,
-							&curr_cap.alt, &curr_cap.q[0], &curr_cap.q[1], &curr_cap.q[2]);
+		char message_in[256];
+		while (fgets(message_in ,256, camera_file)){
+			sscanf(message_in, "%d %f %f %f %f %lf %lf %d", &curr_cap.seq, &curr_cap.q[0], &curr_cap.q[1], &curr_cap.q[2],
+									  &curr_cap.alt, &curr_cap.lat, &curr_cap.lon, &curr_cap.timestamp);
 			if(curr_cap.seq == id){
 				mavlink_camera_image_captured_t msg;
 
-				msg.time_boot_ms = curr_cap.timestamp_utc;
-				msg.time_utc = curr_cap.timestamp_utc;
+				orb_advert_t	_mavlink_log_pub{nullptr};
+				mavlink_log_info(&_mavlink_log_pub, "%s", message_in);
+
+				msg.time_boot_ms = curr_cap.timestamp;
+				msg.time_utc = 0;
 				msg.camera_id = 1;	// FIXME : get this from uORB
-				msg.lat = curr_cap.lat * 1e7;
-				msg.lon = curr_cap.lon * 1e7;
+				msg.lat = curr_cap.lat * 1e7;;
+				msg.lon = curr_cap.lon * 1e7;;
 				msg.alt = curr_cap.alt * 1e3f;
+				msg.relative_alt = 0;
 				msg.q[0] = curr_cap.q[0];
 				msg.q[1] = curr_cap.q[1];
 				msg.q[2] = curr_cap.q[2];
-				msg.q[3] = curr_cap.q[3];
+				msg.q[3] = 1912;
 				msg.image_index = curr_cap.seq;
 				msg.capture_result = 1;
 				msg.file_url[0] = '\0';
+
 				mavlink_msg_camera_image_captured_send_struct(_mavlink->get_channel(), &msg);
 				fclose (camera_file);
 				return true;

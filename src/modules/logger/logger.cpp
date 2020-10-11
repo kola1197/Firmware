@@ -1168,12 +1168,12 @@ void Logger::run()
 			if (ret == 0 && camera_updated){
 				camera_capture_s cam_cap;
 				orb_copy(ORB_ID(camera_capture), camera_sub, &cam_cap);
-				char message[128];
-				int ret_s = snprintf(message, 128, "%d %d %.20f %.20f %.8f %.4f %.4f %.4f\n",
-								cam_cap.seq, cam_cap.timestamp_utc, cam_cap.lat, cam_cap.lon,
-				 	 			cam_cap.alt, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2]);
+				char message[256];
+				int ret_s = snprintf(message, 256, "%d %.4f %.4f %.4f %.4f %.16f %.16f %d\n",
+								cam_cap.seq, cam_cap.q[0], cam_cap.q[1], cam_cap.q[2],
+								cam_cap.alt, cam_cap.lat, cam_cap.lon,cam_cap.timestamp);
 
-				mavlink_log_info(&_mavlink_log_pub, "%s", message);
+				mavlink_log_info(&_mavlink_log_pub, "s=%d %s", ret_s, message);
 				//_writer.write_message_straightforward(LogType::Mission, message, ret_s);
 				write_message(LogType::Mission, message, ret_s);
 			}

@@ -52,6 +52,7 @@ CameraFeedback::CameraFeedback() :
 	_main_task(-1),
 	_trigger_sub(-1),
 	_gpos_sub(-1),
+	_time_sub(-1),
 	_att_sub(-1),
 	_capture_pub(nullptr),
 	_camera_capture_feedback(false)
@@ -134,7 +135,9 @@ CameraFeedback::task_main()
 
 	// Geotagging subscriptions
 	_gpos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
+	_time_sub = orb_subscribe(ORB_ID(vehicle_gps_position));
 	_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+	struct vehicle_gps_position_s gps_time = {};
 	struct vehicle_global_position_s gpos = {};
 	struct vehicle_attitude_s att = {};
 
@@ -160,16 +163,19 @@ CameraFeedback::task_main()
 
 			/* update geotagging subscriptions */
 			orb_check(_gpos_sub, &updated);
-
-			if (updated) {
+			if (updated)
 				orb_copy(ORB_ID(vehicle_global_position), _gpos_sub, &gpos);
-			}
+
+			/* update time subscriptions */
+			orb_check(_time_sub, &updated);
+			if (updated)
+				orb_copy(ORB_ID(vehicle_gps_position), _time_sub, &gps_time);
+
 
 			orb_check(_att_sub, &updated);
-
-			if (updated) {
+			if (updated)
 				orb_copy(ORB_ID(vehicle_attitude), _att_sub, &att);
-			}
+
 
 			// if (trig.timestamp == 0 ||
 			//     gpos.timestamp == 0 ||
@@ -183,7 +189,7 @@ CameraFeedback::task_main()
 			// Fill timestamps
 			capture.timestamp = trig.timestamp;
 
-			capture.timestamp_utc = trig.timestamp_utc;
+			capture.timestamp_utc = gps_time.time_utc_usec;
 
 			// Fill image sequence
 			capture.seq = trig.seq;
