@@ -1103,7 +1103,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
 
             /* reset setpoints from other modes (auto) otherwise we won't
              * level out without new manual input */
-            _att_sp.roll_body = _manual.y;
+            _att_sp.roll_body = 0;
             _att_sp.yaw_body = 0;
         }
 
@@ -1160,12 +1160,6 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         /* update desired altitude based on user pitch stick input */
         bool climbout_requested = update_desired_altitude(dt);
 
-        // if we assume that user is taking off then help by demanding altitude setpoint well above ground
-        // and set limit to pitch angle to prevent steering into ground
-        // this will only affect planes and not VTOL
-        float pitch_limit_min = _parameters.pitch_limit_min;
-        do_takeoff_help(&_hold_alt, &pitch_limit_min);
-
         /* throttle limiting */
         throttle_max = _parameters.throttle_max;
 
@@ -1184,7 +1178,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
                                    climbout_requested ? radians(10.0f) : pitch_limit_min,
                                    tecs_status_s::TECS_MODE_NORMAL);
 
-        _att_sp.roll_body = _manual.y;
+        _att_sp.roll_body = radians(_manual.y);
         _att_sp.yaw_body = 0;
 
     } else {
