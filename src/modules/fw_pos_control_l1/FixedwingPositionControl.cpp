@@ -458,22 +458,7 @@ FixedwingPositionControl::position_setpoint_triplet_poll() {
 
 float
 FixedwingPositionControl::get_demanded_airspeed() {
-    float altctrl_airspeed = 0;
-
-    // neutral throttle corresponds to trim airspeed
-    if (_manual.z < 0.5f) {
-        // lower half of throttle is min to trim airspeed
-        altctrl_airspeed = _parameters.airspeed_min +
-                           (_parameters.airspeed_trim - _parameters.airspeed_min) *
-                           _manual.z * 2;
-
-    } else {
-        // upper half of throttle is trim to max airspeed
-        altctrl_airspeed = _parameters.airspeed_trim +
-                           (_parameters.airspeed_max - _parameters.airspeed_trim) *
-                           (_manual.z * 2 - 1);
-    }
-
+    float altctrl_airspeed = constrain(_manual.z, _parameters.airspeed_min, _parameters.airspeed_max);
     return altctrl_airspeed;
 }
 
@@ -716,17 +701,9 @@ FixedwingPositionControl::get_terrain_altitude_takeoff(float takeoff_alt,
 bool
 FixedwingPositionControl::update_desired_altitude(float dt) {
     /*
-     * The complete range is -1..+1, so this is 6%
-     * of the up or down range or 3% of the total range.
+     * if the desired altitude less then 100m keep current altitude
      */
-    const float deadBand = 0.06f;
-
-    /*
-     * The correct scaling of the complete range needs
-     * to account for the missing part of the slope
-     * due to the deadband
-     */
-    const float factor = 1.0f - deadBand;
+    const float deadBand = 100.0f;
 
     /* Climbout mode sets maximum throttle and pitch up */
     bool climbout_mode = false;
@@ -749,25 +726,10 @@ FixedwingPositionControl::update_desired_altitude(float dt) {
      * the X axis in NED frame, which is pitching down
      */
     if (_manual.x > deadBand) {
-        /* pitching down */
-        float pitch = -(_manual.x - deadBand) / factor;
-        _hold_alt += (_parameters.max_sink_rate * dt) * pitch;
-        _was_in_deadband = false;
-
-    } else if (_manual.x < -deadBand) {
-        /* pitching up */
-        float pitch = -(_manual.x + deadBand) / factor;
-        _hold_alt += (_parameters.max_climb_rate * dt) * pitch;
-        _was_in_deadband = false;
-        climbout_mode = (pitch > MANUAL_THROTTLE_CLIMBOUT_THRESH);
-
-    } else if (!_was_in_deadband) {
-        /* store altitude at which manual.x was inside deadBand
-         * The aircraft should immediately try to fly at this altitude
-         * as this is what the pilot expects when he moves the stick to the center */
+        _hold_alt = _manual.x;
+    } else {
         _hold_alt = _global_pos.alt;
         _althold_epv = _global_pos.epv;
-        _was_in_deadband = true;
     }
 
     if (_vehicle_status.is_vtol) {
@@ -1141,7 +1103,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
 
             /* reset setpoints from other modes (auto) otherwise we won't
              * level out without new manual input */
-            _att_sp.roll_body = _manual.y * _parameters.man_roll_max_rad;
+            _att_sp.roll_body = _manual.y;
             _att_sp.yaw_body = 0;
         }
 
@@ -1152,16 +1114,10 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         /* update desired altitude based on user pitch stick input */
         bool climbout_requested = update_desired_altitude(dt);
 
-        // if we assume that user is taking off then help by demanding altitude setpoint well above ground
-        // and set limit to pitch angle to prevent steering into ground
-        // this will only affect planes and not VTOL
-        float pitch_limit_min = _parameters.pitch_limit_min;
-        do_takeoff_help(&_hold_alt, &pitch_limit_min);
-
         /* throttle limiting */
         throttle_max = _parameters.throttle_max;
 
-        if (_vehicle_land_detected.landed && (fabsf(_manual.z) < THROTTLE_THRESH)) {
+        if (_vehicle_land_detected.landed) {
             throttle_max = 0.0f;
         }
 
@@ -1176,67 +1132,17 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
                                    climbout_requested ? radians(10.0f) : pitch_limit_min,
                                    tecs_status_s::TECS_MODE_NORMAL);
 
-        /* heading control */
-        if (fabsf(_manual.y) < HDG_HOLD_MAN_INPUT_THRESH &&
-            fabsf(_manual.r) < HDG_HOLD_MAN_INPUT_THRESH) {
+        _hdg_hold_yaw = radians(_manual.r);
+        get_waypoint_heading_distance(_hdg_hold_yaw, _hdg_hold_prev_wp, _hdg_hold_curr_wp, true);
 
-            /* heading / roll is zero, lock onto current heading */
-            if (fabsf(_att.yawspeed) < HDG_HOLD_YAWRATE_THRESH && !_yaw_lock_engaged) {
-                // little yaw movement, lock to current heading
-                _yaw_lock_engaged = true;
+        Vector2f prev_wp{(float) _hdg_hold_prev_wp.lat, (float) _hdg_hold_prev_wp.lon};
+        Vector2f curr_wp{(float) _hdg_hold_curr_wp.lat, (float) _hdg_hold_curr_wp.lon};
 
-            }
+        /* populate l1 control setpoint */
+        _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, ground_speed);
 
-            /* user tries to do a takeoff in heading hold mode, reset the yaw setpoint on every iteration
-              to make sure the plane does not start rolling
-            */
-            if (in_takeoff_situation()) {
-                _hdg_hold_enabled = false;
-                _yaw_lock_engaged = true;
-            }
-
-            if (_yaw_lock_engaged) {
-
-                /* just switched back from non heading-hold to heading hold */
-                if (!_hdg_hold_enabled) {
-                    _hdg_hold_enabled = true;
-                    _hdg_hold_yaw = _yaw;
-
-                    get_waypoint_heading_distance(_hdg_hold_yaw, _hdg_hold_prev_wp, _hdg_hold_curr_wp, true);
-                }
-
-                /* we have a valid heading hold position, are we too close? */
-                float dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon, _hdg_hold_curr_wp.lat,
-                                                           _hdg_hold_curr_wp.lon);
-
-                if (dist < HDG_HOLD_REACHED_DIST) {
-                    get_waypoint_heading_distance(_hdg_hold_yaw, _hdg_hold_prev_wp, _hdg_hold_curr_wp, false);
-                }
-
-                Vector2f prev_wp{(float) _hdg_hold_prev_wp.lat, (float) _hdg_hold_prev_wp.lon};
-                Vector2f curr_wp{(float) _hdg_hold_curr_wp.lat, (float) _hdg_hold_curr_wp.lon};
-
-                /* populate l1 control setpoint */
-                _l1_control.navigate_waypoints(prev_wp, curr_wp, curr_pos, ground_speed);
-
-                _att_sp.roll_body = _l1_control.get_roll_setpoint();
-                _att_sp.yaw_body = _l1_control.nav_bearing();
-
-                if (in_takeoff_situation()) {
-                    /* limit roll motion to ensure enough lift */
-                    _att_sp.roll_body = constrain(_att_sp.roll_body, radians(-15.0f), radians(15.0f));
-                }
-            }
-        }
-
-        if (!_yaw_lock_engaged || fabsf(_manual.y) >= HDG_HOLD_MAN_INPUT_THRESH ||
-            fabsf(_manual.r) >= HDG_HOLD_MAN_INPUT_THRESH) {
-
-            _hdg_hold_enabled = false;
-            _yaw_lock_engaged = false;
-            _att_sp.roll_body = _manual.y * _parameters.man_roll_max_rad;
-            _att_sp.yaw_body = 0;
-        }
+        _att_sp.roll_body = _l1_control.get_roll_setpoint();
+        _att_sp.yaw_body = _l1_control.nav_bearing();
 
     } else if (_control_mode.flag_control_altitude_enabled) {
         /* ALTITUDE CONTROL: pitch stick moves altitude setpoint, throttle stick sets airspeed */
@@ -1263,7 +1169,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         /* throttle limiting */
         throttle_max = _parameters.throttle_max;
 
-        if (_vehicle_land_detected.landed && (fabsf(_manual.z) < THROTTLE_THRESH)) {
+        if (_vehicle_land_detected.landed) {
             throttle_max = 0.0f;
         }
 
@@ -1278,7 +1184,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
                                    climbout_requested ? radians(10.0f) : pitch_limit_min,
                                    tecs_status_s::TECS_MODE_NORMAL);
 
-        _att_sp.roll_body = _manual.y * _parameters.man_roll_max_rad;
+        _att_sp.roll_body = _manual.y;
         _att_sp.yaw_body = 0;
 
     } else {
