@@ -1132,7 +1132,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
                                    throttle_max,
                                    _parameters.throttle_cruise,
                                    climbout_requested,
-                                   climbout_requested ? radians(10.0f) : pitch_limit_min,
+                                   climbout_requested ? radians(10.0f) : _parameters.pitch_limit_min,
                                    tecs_status_s::TECS_MODE_NORMAL);
 
         _hdg_hold_yaw = radians(_manual.r);
@@ -1178,7 +1178,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
                                    throttle_max,
                                    _parameters.throttle_cruise,
                                    climbout_requested,
-                                   climbout_requested ? radians(10.0f) : pitch_limit_min,
+                                   climbout_requested ? radians(10.0f) : _parameters.pitch_limit_min,
                                    tecs_status_s::TECS_MODE_NORMAL);
 
         _att_sp.roll_body = radians(_manual.y);
