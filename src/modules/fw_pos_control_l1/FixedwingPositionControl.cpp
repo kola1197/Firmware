@@ -893,6 +893,9 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
             pos_sp_curr.cruising_speed > 0.1f) {
 
             mission_airspeed = pos_sp_curr.cruising_speed;
+            _parameters.airspeed_trim = mission_airspeed;
+            _parameters.airspeed_max = mission_airspeed + 1.f;
+            _parameters.airspeed_min = mission_airspeed - 1.f;
         }
 
         float mission_throttle = _parameters.throttle_cruise;
