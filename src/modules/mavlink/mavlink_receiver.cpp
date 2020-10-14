@@ -1972,10 +1972,10 @@ MavlinkReceiver::handle_message_manual_control(mavlink_message_t *msg)
 	mavlink_manual_control_t man;
 	mavlink_msg_manual_control_decode(msg, &man);
 
-	// Check target
-	if (man.target != 0 && man.target != _mavlink->get_system_id()) {
-		return;
-	}
+	// // Check target
+	// if (man.target != 0 && man.target != _mavlink->get_system_id()) {
+	// 	return;
+	// }
 
 	// if (_mavlink->get_manual_input_mode_generation()) {
 
@@ -2034,7 +2034,7 @@ MavlinkReceiver::handle_message_manual_control(mavlink_message_t *msg)
 		manual.data_source = manual_control_setpoint_s::SOURCE_MAVLINK_0 + _mavlink->get_instance_id();
 
 		int m_inst;
-		orb_publish_auto(ORB_ID(manual_control_setpoint), &_manual_pub, &manual, &m_inst, ORB_PRIO_LOW);
+		orb_publish_auto(ORB_ID(manual_control_setpoint), &_manual_pub, &manual, &m_inst, ORB_PRIO_HIGH);
 	//}
 }
 

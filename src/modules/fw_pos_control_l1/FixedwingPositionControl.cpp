@@ -1112,7 +1112,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
 
         _control_mode_current = FW_POSCTRL_MODE_POSITION;
 
-        float altctrl_airspeed = get_demanded_airspeed();
+        float altctrl_airspeed = _parameters.airspeed_trim;
 
         /* update desired altitude based on user pitch stick input */
         bool climbout_requested = update_desired_altitude(dt);
@@ -1158,7 +1158,7 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         _control_mode_current = FW_POSCTRL_MODE_ALTITUDE;
 
         /* Get demanded airspeed */
-        float altctrl_airspeed = get_demanded_airspeed();
+        float altctrl_airspeed = _parameters.airspeed_trim;
 
         /* update desired altitude based on user pitch stick input */
         bool climbout_requested = update_desired_altitude(dt);
@@ -1230,7 +1230,6 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         if (_vehicle_land_detected.landed) {
             // when we are landed state we want the motor to spin at idle speed
             _att_sp.thrust_body[0] = min(_parameters.throttle_idle, throttle_max);
-
         } else {
             _att_sp.thrust_body[0] = min(get_tecs_thrust(), throttle_max);
         }
