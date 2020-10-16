@@ -380,6 +380,8 @@ FixedwingPositionControl::manual_control_setpoint_poll() {
     orb_check(_manual_control_sub, &manual_updated);
 
     if (manual_updated) {
+        mavlink_log_critical(&_mavlink_log_pub, "Updated manual control");
+        _manual_mode_last_updated = hrt_absolute_time();
         orb_copy(ORB_ID(manual_control_setpoint), _manual_control_sub, &_manual);
     }
 }
@@ -845,6 +847,34 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         _tecs.reset_state();
     }
 
+    if (_manual_mode_enabled) {
+        if (hrt_elapsed_time(&_manual_mode_last_updated) > 30e6) {
+            mavlink_log_critical(&_mavlink_log_pub, "No updating manual control 30s, switching to auto");
+            _launch_detection_notify = hrt_absolute_time();
+            _manual_mode_enabled = false;
+
+            //-SET-MODE-MISSION-----------------------------
+            vehicle_command_s vcmd_mode = {};
+            vcmd_mode.timestamp = hrt_absolute_time();
+            /* copy the content of mavlink_command_long_t cmd_mavlink into command_t cmd */
+            vcmd_mode.param1 = 157;
+            vcmd_mode.param2 = 4;
+            vcmd_mode.param3 = 4;
+            vcmd_mode.command = vehicle_command_s::VEHICLE_CMD_DO_SET_MODE;
+            vcmd_mode.target_system = 1;
+            vcmd_mode.target_component = 1;
+            vcmd_mode.source_system = 255;
+            vcmd_mode.source_component = 0;
+            vcmd_mode.confirmation = 0;
+            vcmd_mode.from_external = true;
+
+            orb_advert_t _cmd_pub_mode{nullptr};
+            _cmd_pub_mode = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd_mode, vehicle_command_s::ORB_QUEUE_LENGTH);
+
+            //-SET-MODE-END-----------------------------
+        }
+    }
+
     if (_control_mode.flag_control_auto_enabled && pos_sp_curr.valid) {
         /* AUTONOMOUS FLIGHT */
 
@@ -1108,6 +1138,9 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
              * level out without new manual input */
             _att_sp.roll_body = 0;
             _att_sp.yaw_body = 0;
+
+            _manual_mode_last_updated = hrt_absolute_time();
+            _manual_mode_enabled = true;
         }
 
         _control_mode_current = FW_POSCTRL_MODE_POSITION;
@@ -1153,6 +1186,9 @@ FixedwingPositionControl::control_position(const Vector2f &curr_pos, const Vecto
         if (_control_mode_current != FW_POSCTRL_MODE_POSITION && _control_mode_current != FW_POSCTRL_MODE_ALTITUDE) {
             /* Need to init because last loop iteration was in a different mode */
             _hold_alt = _global_pos.alt;
+            _manual_mode_last_updated = hrt_absolute_time();
+            _manual_mode_enabled = true;
+            mavlink_log_critical(&_mavlink_log_pub, "manual control enabled");
         }
 
         _control_mode_current = FW_POSCTRL_MODE_ALTITUDE;

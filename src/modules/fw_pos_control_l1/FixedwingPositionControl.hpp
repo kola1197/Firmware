@@ -242,6 +242,8 @@ private:
     position_setpoint_s _hdg_hold_curr_wp {};		///< position to which heading hold flies */
 
     hrt_abstime _control_position_last_called{0};		///< last call of control_position  */
+    hrt_abstime _manual_mode_last_updated{0};
+    bool _manual_mode_enabled{false};
 
     /* Landing */
     bool _land_noreturn_horizontal{false};
