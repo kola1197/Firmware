@@ -54,7 +54,8 @@ using matrix::Quatf;
 
 GpsFailure::GpsFailure(Navigator *navigator) :
 	MissionBlock(navigator),
-	ModuleParams(navigator)
+	ModuleParams(navigator),
+	_sub_airdata(ORB_ID(vehicle_air_data))
 {
 }
 
@@ -85,8 +86,18 @@ GpsFailure::on_active()
 			 * navigator has to publish an attitude setpoint */
 			vehicle_attitude_setpoint_s att_sp = {};
 			att_sp.timestamp = hrt_absolute_time();
+
+			// get baro altitude
+			_sub_airdata.update();
+			const float baro_altitude_amsl = _sub_airdata.get().baro_alt_meter;
+			if (baro_altitude_amsl - _gps_failed_altitude < 500.f) {
+				att_sp.pitch_body = math::radians(_param_nav_gpsf_p.get());
+			} else if (baro_altitude_amsl - _gps_failed_altitude > 550.f){
+				att_sp.pitch_body = -5.f;
+			} else
+				att_sp.pitch_body = 0.f;
+
 			att_sp.roll_body = math::radians(_param_nav_gpsf_r.get());
-			att_sp.pitch_body = math::radians(_param_nav_gpsf_p.get());
 			att_sp.thrust_body[0] = _param_nav_gpsf_tr.get();
 
 			Quatf q(Eulerf(att_sp.roll_body, att_sp.pitch_body, 0.0f));
@@ -155,6 +166,11 @@ GpsFailure::advance_gpsf()
 	switch (_gpsf_state) {
 	case GPSF_STATE_NONE:
 		_gpsf_state = GPSF_STATE_LOITER;
+
+		// get baro altitude
+		_sub_airdata.update();
+		_gps_failed_altitude = _sub_airdata.get().baro_alt_meter;
+
 		mavlink_log_critical(_navigator->get_mavlink_log_pub(), "Global position failure: fixed bank loiter");
 		break;
 
